@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="pl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#06110c">
+<meta name="description" content="SAEL Browser — załóż okulary na świat. Czystsze przeglądanie internetu.">
+<link rel="manifest" href="./manifest.webmanifest">
+<title>SAEL — Załóż okulary na świat</title>
+
+<style>
+:root{
+  --bg:#041009;
+  --panel:rgba(10,26,18,.72);
+  --line:rgba(153,255,184,.17);
+  --text:#f4fff7;
+  --muted:#9cb3a4;
+  --green:#b7ff62;
+  --green2:#54f0a0;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 50% -10%,#123522 0,#07140c 32%,#020805 72%);
+  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  min-height:100vh;
+  overflow-x:hidden;
+}
+
+#mycelium{
+  position:fixed;
+  inset:0;
+  width:100%;
+  height:100%;
+  z-index:-2;
+  opacity:.72;
+}
+
+.vignette{
+  position:fixed;
+  inset:0;
+  z-index:-1;
+  pointer-events:none;
+  background:
+    radial-gradient(circle at center,transparent 15%,rgba(0,0,0,.55) 100%);
+}
+
+.wrap{
+  width:min(1100px,calc(100% - 34px));
+  margin:auto;
+}
+
+.top{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  padding:22px 0;
+  color:#d7e5dc;
+  font-size:14px;
+}
+
+.brand-mini{
+  letter-spacing:.25em;
+  font-weight:800;
+}
+
+.support{
+  color:var(--green);
+  text-decoration:none;
+  font-weight:800;
+}
+
+.hero{
+  min-height:74vh;
+  display:flex;
+  flex-direction:column;
+  justify-content:center;
+  align-items:center;
+  text-align:center;
+  padding:65px 0 55px;
+}
+
+.logo{
+  font-size:clamp(64px,13vw,142px);
+  letter-spacing:.28em;
+  margin-right:-.28em;
+  font-weight:250;
+  text-shadow:0 0 45px rgba(110,255,160,.15);
+}
+
+.tagline{
+  font-size:clamp(20px,4vw,35px);
+  color:#c8d9ce;
+  margin:8px 0 14px;
+}
+
+.lead{
+  color:var(--muted);
+  max-width:720px;
+  line-height:1.65;
+  font-size:17px;
+}
+
+.actions{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  justify-content:center;
+  margin-top:28px;
+}
+
+.btn{
+  padding:14px 21px;
+  border-radius:16px;
+  text-decoration:none;
+  font-weight:800;
+  transition:.2s;
+  border:1px solid var(--line);
+}
+
+.btn.primary{
+  color:#071008;
+  background:linear-gradient(135deg,var(--green),var(--green2));
+}
+
+.btn.secondary{
+  color:white;
+  background:rgba(255,255,255,.045);
+  backdrop-filter:blur(12px);
+}
+
+.btn:hover{transform:translateY(-2px)}
+
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:15px;
+  margin:0 0 18px;
+}
+
+.card{
+  padding:25px;
+  min-height:190px;
+  border:1px solid var(--line);
+  border-radius:24px;
+  background:linear-gradient(145deg,rgba(13,31,22,.8),rgba(4,14,9,.58));
+  backdrop-filter:blur(16px);
+  box-shadow:0 18px 60px rgba(0,0,0,.22);
+}
+
+.card h3{margin:0 0 11px;font-size:21px}
+.card p{margin:0;color:var(--muted);line-height:1.6}
+
+.icon{
+  font-size:32px;
+  margin-bottom:16px;
+}
+
+.section{
+  padding:65px 0;
+}
+
+.section-title{
+  text-align:center;
+  font-size:clamp(30px,6vw,48px);
+  margin:0 0 12px;
+}
+
+.section-sub{
+  text-align:center;
+  color:var(--muted);
+  max-width:720px;
+  margin:0 auto 35px;
+  line-height:1.6;
+}
+
+.flow{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:12px;
+}
+
+.step{
+  position:relative;
+  text-align:center;
+  padding:23px 14px;
+  border-radius:20px;
+  border:1px solid var(--line);
+  background:rgba(5,19,12,.65);
+}
+
+.num{
+  width:36px;
+  height:36px;
+  display:grid;
+  place-items:center;
+  margin:0 auto 12px;
+  border-radius:50%;
+  background:rgba(183,255,98,.12);
+  color:var(--green);
+  font-weight:900;
+}
+
+.quote{
+  margin:35px 0;
+  padding:34px;
+  border-radius:25px;
+  border:1px solid rgba(183,255,98,.21);
+  background:rgba(6,20,12,.76);
+  text-align:center;
+  font-size:clamp(22px,4vw,34px);
+  font-weight:800;
+  line-height:1.35;
+}
+
+.ecosystem{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:15px;
+}
+
+.linkcard{
+  display:block;
+  text-decoration:none;
+  color:white;
+  padding:28px;
+  border-radius:24px;
+  border:1px solid var(--line);
+  background:rgba(6,19,12,.7);
+}
+
+.linkcard strong{
+  display:block;
+  font-size:23px;
+  margin-bottom:7px;
+}
+
+.linkcard span{color:var(--muted)}
+
+footer{
+  padding:55px 0 75px;
+  color:#72877a;
+  text-align:center;
+  font-size:14px;
+}
+
+.pulse{
+  display:inline-block;
+  width:8px;
+  height:8px;
+  border-radius:50%;
+  background:var(--green2);
+  box-shadow:0 0 18px var(--green2);
+  margin-right:8px;
+}
+
+@media(max-width:760px){
+  .grid{grid-template-columns:1fr}
+  .flow{grid-template-columns:1fr 1fr}
+  .ecosystem{grid-template-columns:1fr}
+  .top{font-size:12px}
+  .hero{min-height:70vh}
+}
+
+@media(max-width:440px){
+  .flow{grid-template-columns:1fr}
+  .logo{font-size:58px}
+}
+</style>
+</head>
+
+<body>
+<canvas id="mycelium"></canvas>
+<div class="vignette"></div>
+
+<div class="wrap">
+
+<header class="top">
+  <div class="brand-mini"><span class="pulse"></span>SAEL</div>
+  <a class="support" href="https://mechbor.pl">Wesprzyj Mech Bor →</a>
+</header>
+
+<main>
+
+<section class="hero">
+  <div class="logo">SAEL</div>
+  <div class="tagline">Załóż okulary na świat.</div>
+  <p class="lead">
+    Internet pokazuje wszystko naraz. SAEL ma pomagać zobaczyć to,
+    czego naprawdę szukasz — ograniczając reklamy, popupy,
+    nachalne komunikaty i informacyjny hałas.
+  </p>
+
+  <div class="actions">
+    <a class="btn primary" href="#jak-dziala">Zobacz jak działa</a>
+    <a class="btn secondary" href="#projekt">Poznaj projekt</a>
+  </div>
+</section>
+
+<section class="grid">
+  <article class="card">
+    <div class="icon">👁️</div>
+    <h3>ORYGINAŁ</h3>
+    <p>Widzisz stronę tak, jak przygotował ją autor. Bez ingerencji SAEL.</p>
+  </article>
+
+  <article class="card">
+    <div class="icon">✨</div>
+    <h3>CZYSTY</h3>
+    <p>SAEL usuwa typowe reklamy, popupy, banery, newslettery i elementy promocyjne.</p>
+  </article>
+
+  <article class="card">
+    <div class="icon">🧠</div>
+    <h3>FactEngine</h3>
+    <p>Docelowo treść ma być nie tylko czystsza, ale również analizowana i oceniana warstwami.</p>
+  </article>
+</section>
+
+<section class="section" id="jak-dziala">
+  <h2 class="section-title">Nie kolejna przeglądarka.</h2>
+  <p class="section-sub">
+    SAEL ma być warstwą pomiędzy człowiekiem a chaosem internetu.
+    Najpierw patrzy. Potem filtruje. Dopiero na końcu pokazuje.
+  </p>
+
+  <div class="flow">
+    <div class="step"><div class="num">1</div>Strona</div>
+    <div class="step"><div class="num">2</div>Analiza</div>
+    <div class="step"><div class="num">3</div>Filtr</div>
+    <div class="step"><div class="num">4</div>Czysta treść</div>
+  </div>
+</section>
+
+<section class="section" id="projekt">
+  <div class="quote">
+    „Technologia nie musi dodawać świata.<br>
+    Czasem powinna odjąć to, co przeszkadza go zobaczyć.”
+  </div>
+
+  <h2 class="section-title">Jedna sieć. Kilka projektów.</h2>
+  <p class="section-sub">
+    Mikoryza w tle nie jest przypadkiem. SAEL powstaje w tym samym
+    ekosystemie pomysłów co MushroomRadar i Mech Bor.
+  </p>
+
+  <div class="ecosystem">
+    <a class="linkcard" href="https://mushroomradar.pl">
+      <strong>🍄 MushroomRadar</strong>
+      <span>Inteligentne wyszukiwanie grzybów i świata lasu.</span>
+    </a>
+
+    <a class="linkcard" href="https://mechbor.pl">
+      <strong>🌲 Mech Bor</strong>
+      <span>AI, robotyka i natura po naszemu.</span>
+    </a>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  SAEL • eksperymentalny projekt przeglądarki • 2026
+</footer>
+
+</div>
+
+<script>
+const canvas=document.getElementById('mycelium');
+const ctx=canvas.getContext('2d');
+let w,h,dpr,nodes=[];
+
+function resize(){
+  dpr=Math.min(devicePixelRatio||1,2);
+  w=innerWidth; h=innerHeight;
+  canvas.width=w*dpr;
+  canvas.height=h*dpr;
+  canvas.style.width=w+'px';
+  canvas.style.height=h+'px';
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  const count=Math.max(38,Math.min(90,Math.floor(w*h/18000)));
+  nodes=Array.from({length:count},()=>({
+    x:Math.random()*w,
+    y:Math.random()*h,
+    vx:(Math.random()-.5)*.18,
+    vy:(Math.random()-.5)*.18,
+    r:Math.random()*1.5+.7,
+    p:Math.random()*Math.PI*2
+  }));
+}
+addEventListener('resize',resize);
+resize();
+
+function draw(t){
+  ctx.clearRect(0,0,w,h);
+
+  for(let i=0;i<nodes.length;i++){
+    const a=nodes[i];
+    a.x+=a.vx; a.y+=a.vy; a.p+=.015;
+    if(a.x<0||a.x>w)a.vx*=-1;
+    if(a.y<0||a.y>h)a.vy*=-1;
+
+    for(let j=i+1;j<nodes.length;j++){
+      const b=nodes[j];
+      const dx=a.x-b.x,dy=a.y-b.y;
+      const d=Math.hypot(dx,dy);
+      if(d<145){
+        ctx.beginPath();
+        ctx.moveTo(a.x,a.y);
+        ctx.lineTo(b.x,b.y);
+        ctx.strokeStyle=`rgba(92,255,154,${(1-d/145)*.105})`;
+        ctx.lineWidth=.7;
+        ctx.stroke();
+      }
+    }
+  }
+
+  for(const n of nodes){
+    const glow=(Math.sin(n.p)+1)/2;
+    ctx.beginPath();
+    ctx.arc(n.x,n.y,n.r+glow*.9,0,Math.PI*2);
+    ctx.fillStyle=`rgba(151,255,185,${.22+glow*.25})`;
+    ctx.fill();
+  }
+
+  requestAnimationFrame(draw);
+}
+requestAnimationFrame(draw);
+
+if('serviceWorker' in navigator){
+  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
+}
+</script>
+</body>
+</html>

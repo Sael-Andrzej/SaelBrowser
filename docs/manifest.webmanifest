@@ -1,0 +1,9 @@
+{
+  "name":"SAEL",
+  "short_name":"SAEL",
+  "description":"Załóż okulary na świat.",
+  "start_url":"./",
+  "display":"standalone",
+  "background_color":"#041009",
+  "theme_color":"#06110c"
+}
