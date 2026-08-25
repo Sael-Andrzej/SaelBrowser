@@ -1,0 +1,38 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:padding="6dp">
+
+        <Button android:id="@+id/backButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="←" />
+        <Button android:id="@+id/forwardButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="→" />
+        <EditText
+            android:id="@+id/addressBar"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:singleLine="true"
+            android:hint="Adres lub wyszukiwanie" />
+        <Button android:id="@+id/goButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Idź" />
+    </LinearLayout>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:paddingHorizontal="6dp">
+        <Button android:id="@+id/cleanButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CZYSTY" />
+        <Button android:id="@+id/originalButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="ORYGINAŁ" />
+    </LinearLayout>
+
+    <WebView
+        android:id="@+id/webView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+</LinearLayout>
