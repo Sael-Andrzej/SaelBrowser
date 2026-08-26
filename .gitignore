@@ -1,0 +1,10 @@
+
+# SAEL - lokalne pliki robocze
+.gradle/
+build/
+download/
+BUILD.txt
+ERROR.txt
+SAEL_BUILD*.log
+SAEL_ERROR.txt
+_backups/
