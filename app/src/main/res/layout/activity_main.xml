@@ -1,38 +1,95 @@
+<?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:orientation="vertical"
+    android:background="#031008">
 
+    <!-- GÓRNY PASEK SAEL -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="58dp"
         android:orientation="horizontal"
-        android:padding="6dp">
+        android:gravity="center_vertical"
+        android:paddingStart="10dp"
+        android:paddingEnd="10dp"
+        android:background="#07170E">
 
-        <Button android:id="@+id/backButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="←" />
-        <Button android:id="@+id/forwardButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="→" />
+        <Button
+            android:id="@+id/backButton"
+            android:layout_width="48dp"
+            android:layout_height="44dp"
+            android:text="←"
+            android:textSize="20sp" />
+
         <EditText
             android:id="@+id/addressBar"
             android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_height="46dp"
             android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:layout_marginEnd="6dp"
             android:singleLine="true"
-            android:hint="Adres lub wyszukiwanie" />
-        <Button android:id="@+id/goButton" android:layout_width="wrap_content" android:layout_height="wrap_content" android:text="Idź" />
+            android:hint="Adres lub wyszukiwanie"
+            android:inputType="textUri"
+            android:paddingStart="14dp"
+            android:paddingEnd="14dp"
+            android:textColor="#F5F2E4"
+            android:hintTextColor="#718077"
+            android:background="#0C2115" />
+
+        <Button
+            android:id="@+id/goButton"
+            android:layout_width="50dp"
+            android:layout_height="44dp"
+            android:text="→"
+            android:textSize="20sp" />
     </LinearLayout>
 
+    <!-- PRZEŁĄCZNIK ORYGINAŁ / SAEL -->
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="54dp"
         android:orientation="horizontal"
-        android:paddingHorizontal="6dp">
-        <Button android:id="@+id/cleanButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="CZYSTY" />
-        <Button android:id="@+id/originalButton" android:layout_width="0dp" android:layout_height="wrap_content" android:layout_weight="1" android:text="ORYGINAŁ" />
+        android:padding="6dp"
+        android:background="#041109">
+
+        <Button
+            android:id="@+id/originalButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:text="ORYGINAŁ"
+            android:textStyle="bold" />
+
+        <Button
+            android:id="@+id/saelButton"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:layout_marginStart="6dp"
+            android:text="👓  SAEL"
+            android:textStyle="bold" />
     </LinearLayout>
 
+    <!-- STATUS -->
+    <TextView
+        android:id="@+id/statusBar"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:gravity="center_vertical"
+        android:paddingStart="14dp"
+        android:paddingEnd="14dp"
+        android:text="👓 SAEL gotowy"
+        android:textColor="#E6C86B"
+        android:textSize="13sp"
+        android:background="#07130C" />
+
+    <!-- STRONA -->
     <WebView
         android:id="@+id/webView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1" />
+
 </LinearLayout>
