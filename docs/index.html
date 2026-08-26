@@ -3,437 +3,648 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#06110c">
-<meta name="description" content="SAEL Browser — załóż okulary na świat. Czystsze przeglądanie internetu.">
-<link rel="manifest" href="./manifest.webmanifest">
+<meta name="theme-color" content="#06100b">
+
 <title>SAEL — Załóż okulary na świat</title>
 
 <style>
 :root{
-  --bg:#041009;
-  --panel:rgba(10,26,18,.72);
-  --line:rgba(153,255,184,.17);
-  --text:#f4fff7;
-  --muted:#9cb3a4;
-  --green:#b7ff62;
-  --green2:#54f0a0;
+    --bg:#030906;
+    --panel:rgba(7,18,12,.78);
+    --panel2:rgba(12,27,18,.68);
+    --green:#83ff72;
+    --green2:#32c66b;
+    --gold:#d9b85f;
+    --gold2:#f2dc91;
+    --text:#eef7ef;
+    --muted:#91a99a;
+    --red:#ff5353;
+    --yellow:#ffd45a;
 }
 
 *{box-sizing:border-box}
-html{scroll-behavior:smooth}
+
+html,body{
+    margin:0;
+    min-height:100%;
+    background:var(--bg);
+    color:var(--text);
+    font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+}
+
 body{
-  margin:0;
-  color:var(--text);
-  background:
-    radial-gradient(circle at 50% -10%,#123522 0,#07140c 32%,#020805 72%);
-  font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
-  min-height:100vh;
-  overflow-x:hidden;
+    overflow-x:hidden;
 }
 
 #mycelium{
-  position:fixed;
-  inset:0;
-  width:100%;
-  height:100%;
-  z-index:-2;
-  opacity:.72;
+    position:fixed;
+    inset:0;
+    width:100%;
+    height:100%;
+    z-index:0;
+    pointer-events:none;
+    opacity:.72;
 }
 
 .vignette{
-  position:fixed;
-  inset:0;
-  z-index:-1;
-  pointer-events:none;
-  background:
-    radial-gradient(circle at center,transparent 15%,rgba(0,0,0,.55) 100%);
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:
+      radial-gradient(circle at 50% 40%,
+      rgba(25,75,45,.15) 0,
+      rgba(2,9,5,.18) 43%,
+      rgba(0,3,1,.83) 100%);
 }
 
-.wrap{
-  width:min(1100px,calc(100% - 34px));
-  margin:auto;
+.page{
+    position:relative;
+    z-index:2;
+    min-height:100vh;
 }
 
 .top{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  padding:22px 0;
-  color:#d7e5dc;
-  font-size:14px;
+    height:76px;
+    max-width:1180px;
+    margin:auto;
+    padding:0 26px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
 }
 
-.brand-mini{
-  letter-spacing:.25em;
-  font-weight:800;
+.brand{
+    display:flex;
+    gap:11px;
+    align-items:center;
+    font-weight:800;
+    letter-spacing:.30em;
+    font-size:14px;
 }
 
-.support{
-  color:var(--green);
-  text-decoration:none;
-  font-weight:800;
+.brandDot{
+    width:8px;
+    height:8px;
+    border-radius:50%;
+    background:var(--gold);
+    box-shadow:0 0 14px rgba(217,184,95,.75);
 }
+
+.wood{
+    position:relative;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    text-decoration:none;
+    color:#f5e6b5;
+    font-family:Georgia,serif;
+    font-weight:700;
+    padding:11px 19px;
+    border-radius:7px;
+    border:1px solid rgba(224,190,102,.45);
+    background:
+       linear-gradient(90deg,
+       rgba(74,43,20,.94),
+       rgba(117,72,32,.96) 22%,
+       rgba(78,45,20,.97) 52%,
+       rgba(125,76,32,.95) 77%,
+       rgba(65,37,17,.97));
+    box-shadow:
+       inset 0 1px 0 rgba(255,235,175,.14),
+       0 7px 24px rgba(0,0,0,.35);
+    overflow:hidden;
+}
+
+.wood:after{
+    content:"";
+    position:absolute;
+    inset:0;
+    opacity:.18;
+    background:
+       repeating-linear-gradient(
+         3deg,
+         transparent 0 5px,
+         rgba(255,222,160,.20) 6px,
+         transparent 7px 12px
+       );
+}
+
+.wood span{position:relative;z-index:1}
 
 .hero{
-  min-height:74vh;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
-  align-items:center;
-  text-align:center;
-  padding:65px 0 55px;
+    min-height:calc(100vh - 76px);
+    max-width:1000px;
+    margin:auto;
+    padding:55px 24px 70px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    text-align:center;
 }
 
-.logo{
-  font-size:clamp(64px,13vw,142px);
-  letter-spacing:.28em;
-  margin-right:-.28em;
-  font-weight:250;
-  text-shadow:0 0 45px rgba(110,255,160,.15);
+.glasses{
+    width:210px;
+    height:88px;
+    position:relative;
+    margin-bottom:24px;
+    filter:drop-shadow(0 0 17px rgba(217,184,95,.16));
+}
+
+.lens{
+    position:absolute;
+    top:20px;
+    width:75px;
+    height:48px;
+    border:4px solid var(--gold);
+    border-radius:12px 12px 28px 28px;
+    background:linear-gradient(145deg,
+       rgba(238,220,145,.08),
+       rgba(41,92,60,.06));
+}
+
+.lens.left{left:18px;transform:rotate(3deg)}
+.lens.right{right:18px;transform:rotate(-3deg)}
+
+.bridge{
+    position:absolute;
+    width:31px;
+    height:15px;
+    border-top:4px solid var(--gold);
+    border-radius:50%;
+    left:89px;
+    top:33px;
+}
+
+.arm{
+    position:absolute;
+    top:24px;
+    width:29px;
+    border-top:4px solid var(--gold);
+}
+
+.arm.a{left:-3px;transform:rotate(-9deg)}
+.arm.b{right:-3px;transform:rotate(9deg)}
+
+h1{
+    margin:0;
+    font-size:clamp(66px,11vw,126px);
+    line-height:.92;
+    letter-spacing:.27em;
+    padding-left:.27em;
+    font-weight:250;
+    color:#f4f5e8;
+    text-shadow:0 0 35px rgba(140,255,160,.07);
 }
 
 .tagline{
-  font-size:clamp(20px,4vw,35px);
-  color:#c8d9ce;
-  margin:8px 0 14px;
+    margin:28px 0 36px;
+    font-family:Georgia,serif;
+    font-size:clamp(22px,3.2vw,34px);
+    color:var(--gold2);
 }
 
-.lead{
-  color:var(--muted);
-  max-width:720px;
-  line-height:1.65;
-  font-size:17px;
+.searchWrap{
+    width:min(820px,100%);
+    position:relative;
 }
 
-.actions{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  justify-content:center;
-  margin-top:28px;
+.search{
+    display:flex;
+    align-items:center;
+    min-height:67px;
+    border:1px solid rgba(217,184,95,.52);
+    background:rgba(2,10,6,.82);
+    border-radius:18px;
+    padding:7px 8px 7px 21px;
+    box-shadow:
+       0 0 0 1px rgba(104,255,126,.05),
+       0 18px 65px rgba(0,0,0,.42),
+       inset 0 0 28px rgba(33,116,66,.08);
+    backdrop-filter:blur(13px);
 }
 
-.btn{
-  padding:14px 21px;
-  border-radius:16px;
-  text-decoration:none;
-  font-weight:800;
-  transition:.2s;
-  border:1px solid var(--line);
+.search:focus-within{
+    border-color:var(--gold2);
+    box-shadow:
+       0 0 0 3px rgba(217,184,95,.08),
+       0 18px 65px rgba(0,0,0,.48);
 }
 
-.btn.primary{
-  color:#071008;
-  background:linear-gradient(135deg,var(--green),var(--green2));
+.searchIcon{
+    color:var(--gold);
+    font-size:21px;
+    margin-right:13px;
 }
 
-.btn.secondary{
-  color:white;
-  background:rgba(255,255,255,.045);
-  backdrop-filter:blur(12px);
+#address{
+    flex:1;
+    min-width:0;
+    border:0;
+    outline:0;
+    background:transparent;
+    color:#f4f7f2;
+    font-size:17px;
 }
 
-.btn:hover{transform:translateY(-2px)}
+#address::placeholder{color:#6f8376}
 
-.grid{
-  display:grid;
-  grid-template-columns:repeat(3,1fr);
-  gap:15px;
-  margin:0 0 18px;
+.go{
+    width:52px;
+    height:52px;
+    border:0;
+    border-radius:13px;
+    cursor:pointer;
+    background:linear-gradient(145deg,var(--gold2),#a98231);
+    color:#11140e;
+    font-size:22px;
+    font-weight:900;
 }
 
-.card{
-  padding:25px;
-  min-height:190px;
-  border:1px solid var(--line);
-  border-radius:24px;
-  background:linear-gradient(145deg,rgba(13,31,22,.8),rgba(4,14,9,.58));
-  backdrop-filter:blur(16px);
-  box-shadow:0 18px 60px rgba(0,0,0,.22);
+.hint{
+    min-height:23px;
+    margin-top:13px;
+    font-size:13px;
+    color:#6e8576;
 }
 
-.card h3{margin:0 0 11px;font-size:21px}
-.card p{margin:0;color:var(--muted);line-height:1.6}
-
-.icon{
-  font-size:32px;
-  margin-bottom:16px;
+.signal{
+    margin-top:48px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    flex-wrap:wrap;
+    gap:13px 23px;
+    font-size:13px;
+    color:#7f9687;
 }
 
-.section{
-  padding:65px 0;
+.sig{
+    display:flex;
+    gap:8px;
+    align-items:center;
 }
 
-.section-title{
-  text-align:center;
-  font-size:clamp(30px,6vw,48px);
-  margin:0 0 12px;
+.ball{
+    width:8px;
+    height:8px;
+    border-radius:50%;
 }
 
-.section-sub{
-  text-align:center;
-  color:var(--muted);
-  max-width:720px;
-  margin:0 auto 35px;
-  line-height:1.6;
+.good{background:var(--green);box-shadow:0 0 9px var(--green)}
+.unsure{background:var(--yellow);box-shadow:0 0 9px var(--yellow)}
+.false{background:var(--red);box-shadow:0 0 9px var(--red)}
+
+.stats{
+    margin-top:auto;
+    padding-top:58px;
+    display:flex;
+    flex-wrap:wrap;
+    justify-content:center;
+    gap:13px;
 }
 
-.flow{
-  display:grid;
-  grid-template-columns:repeat(4,1fr);
-  gap:12px;
+.stat{
+    min-width:150px;
+    padding:12px 17px;
+    border:1px solid rgba(93,159,110,.16);
+    border-radius:13px;
+    background:rgba(3,12,7,.45);
+    color:#758b7d;
+    font-size:12px;
 }
 
-.step{
-  position:relative;
-  text-align:center;
-  padding:23px 14px;
-  border-radius:20px;
-  border:1px solid var(--line);
-  background:rgba(5,19,12,.65);
+.stat strong{
+    display:block;
+    color:#a6b9aa;
+    font-size:16px;
+    margin-bottom:3px;
 }
 
-.num{
-  width:36px;
-  height:36px;
-  display:grid;
-  place-items:center;
-  margin:0 auto 12px;
-  border-radius:50%;
-  background:rgba(183,255,98,.12);
-  color:var(--green);
-  font-weight:900;
+.bottom{
+    padding:25px;
+    text-align:center;
+    color:#425247;
+    font-size:11px;
 }
 
-.quote{
-  margin:35px 0;
-  padding:34px;
-  border-radius:25px;
-  border:1px solid rgba(183,255,98,.21);
-  background:rgba(6,20,12,.76);
-  text-align:center;
-  font-size:clamp(22px,4vw,34px);
-  font-weight:800;
-  line-height:1.35;
-}
-
-.ecosystem{
-  display:grid;
-  grid-template-columns:1fr 1fr;
-  gap:15px;
-}
-
-.linkcard{
-  display:block;
-  text-decoration:none;
-  color:white;
-  padding:28px;
-  border-radius:24px;
-  border:1px solid var(--line);
-  background:rgba(6,19,12,.7);
-}
-
-.linkcard strong{
-  display:block;
-  font-size:23px;
-  margin-bottom:7px;
-}
-
-.linkcard span{color:var(--muted)}
-
-footer{
-  padding:55px 0 75px;
-  color:#72877a;
-  text-align:center;
-  font-size:14px;
-}
-
-.pulse{
-  display:inline-block;
-  width:8px;
-  height:8px;
-  border-radius:50%;
-  background:var(--green2);
-  box-shadow:0 0 18px var(--green2);
-  margin-right:8px;
-}
-
-@media(max-width:760px){
-  .grid{grid-template-columns:1fr}
-  .flow{grid-template-columns:1fr 1fr}
-  .ecosystem{grid-template-columns:1fr}
-  .top{font-size:12px}
-  .hero{min-height:70vh}
-}
-
-@media(max-width:440px){
-  .flow{grid-template-columns:1fr}
-  .logo{font-size:58px}
+@media(max-width:600px){
+    .top{height:67px;padding:0 15px}
+    .hero{padding-top:42px}
+    .glasses{transform:scale(.84);margin-bottom:12px}
+    h1{font-size:61px}
+    .tagline{margin-top:22px}
+    .wood{font-size:12px;padding:9px 11px}
+    .brand{font-size:12px}
+    .stats{padding-top:43px}
 }
 </style>
 </head>
 
 <body>
+
 <canvas id="mycelium"></canvas>
 <div class="vignette"></div>
 
-<div class="wrap">
+<div class="page">
 
 <header class="top">
-  <div class="brand-mini"><span class="pulse"></span>SAEL</div>
-  <a class="support" href="https://mechbor.pl">Wesprzyj Mech Bor →</a>
+    <div class="brand">
+        <span class="brandDot"></span>
+        SAEL
+    </div>
+
+    <!-- PODMIEŃ href na właściwy bezpośredni adres zbiórki -->
+    <a class="wood"
+       id="fundraiser"
+       href="#"
+       target="_blank"
+       rel="noopener">
+       <span data-i18n="fund">Wesprzyj zbiórkę</span>
+    </a>
 </header>
 
-<main>
+<main class="hero">
 
-<section class="hero">
-  <div class="logo">SAEL</div>
-  <div class="tagline">Załóż okulary na świat.</div>
-  <p class="lead">
-    Internet pokazuje wszystko naraz. SAEL ma pomagać zobaczyć to,
-    czego naprawdę szukasz — ograniczając reklamy, popupy,
-    nachalne komunikaty i informacyjny hałas.
-  </p>
+    <div class="glasses" aria-hidden="true">
+        <div class="arm a"></div>
+        <div class="arm b"></div>
+        <div class="lens left"></div>
+        <div class="lens right"></div>
+        <div class="bridge"></div>
+    </div>
 
-  <div class="actions">
-    <a class="btn primary" href="#jak-dziala">Zobacz jak działa</a>
-    <a class="btn secondary" href="#projekt">Poznaj projekt</a>
-  </div>
-</section>
+    <h1>SAEL</h1>
 
-<section class="grid">
-  <article class="card">
-    <div class="icon">👁️</div>
-    <h3>ORYGINAŁ</h3>
-    <p>Widzisz stronę tak, jak przygotował ją autor. Bez ingerencji SAEL.</p>
-  </article>
+    <div class="tagline" data-i18n="tag">
+        Załóż okulary na świat.
+    </div>
 
-  <article class="card">
-    <div class="icon">✨</div>
-    <h3>CZYSTY</h3>
-    <p>SAEL usuwa typowe reklamy, popupy, banery, newslettery i elementy promocyjne.</p>
-  </article>
+    <div class="searchWrap">
+        <form class="search" id="searchForm">
+            <div class="searchIcon">⌕</div>
 
-  <article class="card">
-    <div class="icon">🧠</div>
-    <h3>FactEngine</h3>
-    <p>Docelowo treść ma być nie tylko czystsza, ale również analizowana i oceniana warstwami.</p>
-  </article>
-</section>
+            <input
+              id="address"
+              type="text"
+              autocomplete="off"
+              autocapitalize="off"
+              spellcheck="false"
+              data-i18n-placeholder="placeholder"
+              placeholder="Wpisz adres lub czego szukasz">
 
-<section class="section" id="jak-dziala">
-  <h2 class="section-title">Nie kolejna przeglądarka.</h2>
-  <p class="section-sub">
-    SAEL ma być warstwą pomiędzy człowiekiem a chaosem internetu.
-    Najpierw patrzy. Potem filtruje. Dopiero na końcu pokazuje.
-  </p>
+            <button class="go"
+                    type="submit"
+                    aria-label="Go">→</button>
+        </form>
 
-  <div class="flow">
-    <div class="step"><div class="num">1</div>Strona</div>
-    <div class="step"><div class="num">2</div>Analiza</div>
-    <div class="step"><div class="num">3</div>Filtr</div>
-    <div class="step"><div class="num">4</div>Czysta treść</div>
-  </div>
-</section>
+        <div class="hint" id="hint" data-i18n="hint">
+            SAEL układa Internet dla Ciebie.
+        </div>
+    </div>
 
-<section class="section" id="projekt">
-  <div class="quote">
-    „Technologia nie musi dodawać świata.<br>
-    Czasem powinna odjąć to, co przeszkadza go zobaczyć.”
-  </div>
+    <div class="signal">
+        <div class="sig">
+            <i class="ball good"></i>
+            <span data-i18n="green">zielony — wiarygodne</span>
+        </div>
 
-  <h2 class="section-title">Jedna sieć. Kilka projektów.</h2>
-  <p class="section-sub">
-    Mikoryza w tle nie jest przypadkiem. SAEL powstaje w tym samym
-    ekosystemie pomysłów co MushroomRadar i Mech Bor.
-  </p>
+        <div class="sig">
+            <i class="ball unsure"></i>
+            <span data-i18n="yellow">żółty — niepewne</span>
+        </div>
 
-  <div class="ecosystem">
-    <a class="linkcard" href="https://mushroomradar.pl">
-      <strong>🍄 MushroomRadar</strong>
-      <span>Inteligentne wyszukiwanie grzybów i świata lasu.</span>
-    </a>
+        <div class="sig">
+            <i class="ball false"></i>
+            <span data-i18n="red">czerwony — fałsz / manipulacja</span>
+        </div>
+    </div>
 
-    <a class="linkcard" href="https://mechbor.pl">
-      <strong>🌲 Mech Bor</strong>
-      <span>AI, robotyka i natura po naszemu.</span>
-    </a>
-  </div>
-</section>
+    <div class="stats">
+        <div class="stat">
+            <strong id="sessionPages">0</strong>
+            <span data-i18n="pages">stron w tej sesji</span>
+        </div>
+
+        <div class="stat">
+            <strong id="language">PL</strong>
+            <span data-i18n="language">język automatyczny</span>
+        </div>
+
+        <div class="stat">
+            <strong>SAEL</strong>
+            <span data-i18n="mode">tryb czytelny</span>
+        </div>
+    </div>
 
 </main>
 
-<footer>
-  SAEL • eksperymentalny projekt przeglądarki • 2026
+<footer class="bottom">
+    SAEL
 </footer>
 
 </div>
 
 <script>
-const canvas=document.getElementById('mycelium');
-const ctx=canvas.getContext('2d');
-let w,h,dpr,nodes=[];
+/* ==========================================================
+   AUTO LANGUAGE
+   ========================================================== */
+
+const dictionaries = {
+pl:{
+    fund:"Wesprzyj zbiórkę",
+    tag:"Załóż okulary na świat.",
+    placeholder:"Wpisz adres lub czego szukasz",
+    hint:"SAEL układa Internet dla Ciebie.",
+    green:"zielony — wiarygodne",
+    yellow:"żółty — niepewne",
+    red:"czerwony — fałsz / manipulacja",
+    pages:"stron w tej sesji",
+    language:"język automatyczny",
+    mode:"tryb czytelny"
+},
+en:{
+    fund:"Support the fundraiser",
+    tag:"Put on glasses for the world.",
+    placeholder:"Enter an address or search",
+    hint:"SAEL arranges the Internet for you.",
+    green:"green — reliable",
+    yellow:"yellow — uncertain",
+    red:"red — false / manipulation",
+    pages:"pages this session",
+    language:"automatic language",
+    mode:"clear mode"
+},
+de:{
+    fund:"Sammlung unterstützen",
+    tag:"Setz der Welt eine Brille auf.",
+    placeholder:"Adresse oder Suchbegriff eingeben",
+    hint:"SAEL ordnet das Internet für dich.",
+    green:"grün — glaubwürdig",
+    yellow:"gelb — unsicher",
+    red:"rot — falsch / Manipulation",
+    pages:"Seiten in dieser Sitzung",
+    language:"automatische Sprache",
+    mode:"klarer Modus"
+},
+cs:{
+    fund:"Podpořit sbírku",
+    tag:"Nasaď světu brýle.",
+    placeholder:"Zadejte adresu nebo hledaný výraz",
+    hint:"SAEL pro vás uspořádá Internet.",
+    green:"zelená — důvěryhodné",
+    yellow:"žlutá — nejisté",
+    red:"červená — nepravda / manipulace",
+    pages:"stránek v této relaci",
+    language:"automatický jazyk",
+    mode:"čistý režim"
+}
+};
+
+let lang=(navigator.languages?.[0] || navigator.language || "en")
+    .toLowerCase().split("-")[0];
+
+if(lang==="cz") lang="cs";
+if(!dictionaries[lang]) lang="en";
+
+document.documentElement.lang=lang;
+
+document.querySelectorAll("[data-i18n]").forEach(el=>{
+    const key=el.dataset.i18n;
+    if(dictionaries[lang][key])
+        el.textContent=dictionaries[lang][key];
+});
+
+document.querySelectorAll("[data-i18n-placeholder]").forEach(el=>{
+    const key=el.dataset.i18nPlaceholder;
+    if(dictionaries[lang][key])
+        el.placeholder=dictionaries[lang][key];
+});
+
+document.getElementById("language").textContent=lang.toUpperCase();
+
+
+/* ==========================================================
+   SEARCH / ADDRESS
+   ========================================================== */
+
+let pages=Number(sessionStorage.getItem("saelPages") || 0);
+document.getElementById("sessionPages").textContent=pages;
+
+document.getElementById("searchForm").addEventListener("submit",e=>{
+    e.preventDefault();
+
+    let s=document.getElementById("address").value.trim();
+    if(!s) return;
+
+    pages++;
+    sessionStorage.setItem("saelPages",String(pages));
+    document.getElementById("sessionPages").textContent=pages;
+
+    let url;
+
+    if(/^https?:\/\//i.test(s)){
+        url=s;
+    }else if(
+        s.includes(".") &&
+        !s.includes(" ")
+    ){
+        url="https://"+s;
+    }else{
+        url="https://www.google.com/search?q="+encodeURIComponent(s);
+    }
+
+    location.href=url;
+});
+
+
+/* ==========================================================
+   MYCELIUM — SHARPER VERSION
+   ========================================================== */
+
+const canvas=document.getElementById("mycelium");
+const ctx=canvas.getContext("2d");
+
+let W,H,DPR;
+let nodes=[];
 
 function resize(){
-  dpr=Math.min(devicePixelRatio||1,2);
-  w=innerWidth; h=innerHeight;
-  canvas.width=w*dpr;
-  canvas.height=h*dpr;
-  canvas.style.width=w+'px';
-  canvas.style.height=h+'px';
-  ctx.setTransform(dpr,0,0,dpr,0,0);
-  const count=Math.max(38,Math.min(90,Math.floor(w*h/18000)));
-  nodes=Array.from({length:count},()=>({
-    x:Math.random()*w,
-    y:Math.random()*h,
-    vx:(Math.random()-.5)*.18,
-    vy:(Math.random()-.5)*.18,
-    r:Math.random()*1.5+.7,
-    p:Math.random()*Math.PI*2
-  }));
+    DPR=Math.min(window.devicePixelRatio || 1,2);
+    W=innerWidth;
+    H=innerHeight;
+
+    canvas.width=W*DPR;
+    canvas.height=H*DPR;
+    canvas.style.width=W+"px";
+    canvas.style.height=H+"px";
+
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+
+    const count=Math.max(40,Math.min(92,Math.floor(W*H/16000)));
+
+    nodes=Array.from({length:count},()=>({
+        x:Math.random()*W,
+        y:Math.random()*H,
+        vx:(Math.random()-.5)*.13,
+        vy:(Math.random()-.5)*.13,
+        r:Math.random()*1.7+.65
+    }));
 }
-addEventListener('resize',resize);
-resize();
 
-function draw(t){
-  ctx.clearRect(0,0,w,h);
+function draw(){
+    ctx.clearRect(0,0,W,H);
 
-  for(let i=0;i<nodes.length;i++){
-    const a=nodes[i];
-    a.x+=a.vx; a.y+=a.vy; a.p+=.015;
-    if(a.x<0||a.x>w)a.vx*=-1;
-    if(a.y<0||a.y>h)a.vy*=-1;
+    for(const n of nodes){
+        n.x+=n.vx;
+        n.y+=n.vy;
 
-    for(let j=i+1;j<nodes.length;j++){
-      const b=nodes[j];
-      const dx=a.x-b.x,dy=a.y-b.y;
-      const d=Math.hypot(dx,dy);
-      if(d<145){
-        ctx.beginPath();
-        ctx.moveTo(a.x,a.y);
-        ctx.lineTo(b.x,b.y);
-        ctx.strokeStyle=`rgba(92,255,154,${(1-d/145)*.105})`;
-        ctx.lineWidth=.7;
-        ctx.stroke();
-      }
+        if(n.x<0||n.x>W)n.vx*=-1;
+        if(n.y<0||n.y>H)n.vy*=-1;
     }
-  }
 
-  for(const n of nodes){
-    const glow=(Math.sin(n.p)+1)/2;
-    ctx.beginPath();
-    ctx.arc(n.x,n.y,n.r+glow*.9,0,Math.PI*2);
-    ctx.fillStyle=`rgba(151,255,185,${.22+glow*.25})`;
-    ctx.fill();
-  }
+    for(let i=0;i<nodes.length;i++){
+        for(let j=i+1;j<nodes.length;j++){
 
-  requestAnimationFrame(draw);
+            const a=nodes[i],b=nodes[j];
+            const dx=a.x-b.x;
+            const dy=a.y-b.y;
+            const d=Math.hypot(dx,dy);
+
+            if(d<155){
+                const alpha=(1-d/155)*.25;
+
+                ctx.strokeStyle=`rgba(83,205,119,${alpha})`;
+                ctx.lineWidth=.72;
+
+                ctx.beginPath();
+                ctx.moveTo(a.x,a.y);
+                ctx.lineTo(b.x,b.y);
+                ctx.stroke();
+            }
+        }
+    }
+
+    for(const n of nodes){
+        ctx.fillStyle="rgba(111,231,139,.58)";
+        ctx.beginPath();
+        ctx.arc(n.x,n.y,n.r,0,Math.PI*2);
+        ctx.fill();
+
+        if(n.r>1.7){
+            ctx.fillStyle="rgba(151,255,171,.09)";
+            ctx.beginPath();
+            ctx.arc(n.x,n.y,n.r*4.3,0,Math.PI*2);
+            ctx.fill();
+        }
+    }
+
+    requestAnimationFrame(draw);
 }
-requestAnimationFrame(draw);
 
-if('serviceWorker' in navigator){
-  addEventListener('load',()=>navigator.serviceWorker.register('./sw.js'));
-}
+addEventListener("resize",resize);
+resize();
+draw();
+
 </script>
 </body>
 </html>
