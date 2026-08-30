@@ -6,7 +6,16 @@ class ThresholdFactEngine(
         LocalEvidenceProvider(),
         StructuredClaimReviewProvider()
     ),
-    private val verdictThreshold: Double = DEFAULT_VERDICT_THRESHOLD
+    private val verdictThreshold: Double = DEFAULT_VERDICT_THRESHOLD,
+    private val claimExtractor: pl.sael.browser.fact.claim.ClaimExtractor =
+        pl.sael.browser.fact.claim.LocalClaimExtractor(),
+    private val evidenceEngine: pl.sael.browser.fact.evidence.EvidenceEngine =
+        pl.sael.browser.fact.evidence.EvidenceEngine(
+            listOf(
+                pl.sael.browser.fact.providers.FactCheckApiProvider(),
+                pl.sael.browser.fact.providers.WebSearchProvider()
+            )
+        )
 ) : FactEngine {
     init {
         require(verdictThreshold in 0.5..1.0)
@@ -14,6 +23,8 @@ class ThresholdFactEngine(
 
     override fun evaluate(article: ArticleInput): FactResult {
         val clickbait = clickbaitAnalyzer.analyze(article.title, article.content)
+        val claims = claimExtractor.extract(article.title, article.content, article.publishedAt)
+        val evidenceSets = claims.map { claim -> evidenceEngine.evaluate(claim, article.url, article.domain) }
         val collected = providers.map { provider -> provider to provider.collect(article, clickbait) }
         val evidence = collected.flatMap { it.second }
         val trueEvidence = evidence.filter {
@@ -31,7 +42,34 @@ class ThresholdFactEngine(
         val confidence: Double
         val rationale: String
 
+        val externalConflicts = evidenceSets.any(pl.sael.browser.fact.evidence.EvidenceSet::conflict)
+        val factualSets = evidenceSets.filter {
+            it.claim.type == pl.sael.browser.fact.claim.ClaimType.FACTUAL
+        }
+        val hasUnresolvedFactualClaim = factualSets.any { !it.sufficient }
+        val externalSupports = evidenceSets.filter {
+            it.sufficient && it.supports.isNotEmpty() && it.refutes.isEmpty()
+        }
+        val externalRefutes = evidenceSets.filter {
+            it.sufficient && it.refutes.isNotEmpty() && it.supports.isEmpty()
+        }
+
         when {
+            externalConflicts || (externalSupports.isNotEmpty() && externalRefutes.isNotEmpty()) -> {
+                verdict = FactVerdict.UNKNOWN
+                confidence = 0.0
+                rationale = "Źródła są sprzeczne. Wyniku nie można uczciwie rozstrzygnąć."
+            }
+            externalSupports.isNotEmpty() && !hasUnresolvedFactualClaim -> {
+                verdict = FactVerdict.TRUE
+                confidence = externalSupports.maxOf(pl.sael.browser.fact.evidence.EvidenceSet::confidence)
+                rationale = "Niezależne dowody zewnętrzne przekroczyły bezpieczny próg potwierdzenia."
+            }
+            externalRefutes.isNotEmpty() && !hasUnresolvedFactualClaim -> {
+                verdict = FactVerdict.FALSE
+                confidence = externalRefutes.maxOf(pl.sael.browser.fact.evidence.EvidenceSet::confidence)
+                rationale = "Niezależne dowody zewnętrzne przekroczyły bezpieczny próg obalenia."
+            }
             trueEvidence.isNotEmpty() && falseEvidence.isNotEmpty() -> {
                 verdict = FactVerdict.UNKNOWN
                 confidence = 0.0
@@ -74,7 +112,9 @@ class ThresholdFactEngine(
             evidence = evidence,
             sources = sources,
             origin = origin,
-            clickbait = clickbait
+            clickbait = clickbait,
+            claims = claims,
+            evidenceSets = evidenceSets
         )
     }
 

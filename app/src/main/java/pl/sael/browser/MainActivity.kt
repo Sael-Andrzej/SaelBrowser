@@ -10,6 +10,7 @@ import android.webkit.WebResourceRequest
 import android.webkit.WebResourceResponse
 import android.webkit.WebView
 import android.webkit.WebViewClient
+import android.webkit.WebSettings
 import android.widget.Button
 import android.widget.EditText
 import android.widget.TextView
@@ -94,6 +95,14 @@ class MainActivity : AppCompatActivity() {
             displayZoomControls = false
             useWideViewPort = true
             loadWithOverviewMode = true
+            allowFileAccess = false
+            allowContentAccess = false
+            @Suppress("DEPRECATION")
+            allowFileAccessFromFileURLs = false
+            @Suppress("DEPRECATION")
+            allowUniversalAccessFromFileURLs = false
+            mixedContentMode = WebSettings.MIXED_CONTENT_NEVER_ALLOW
+            safeBrowsingEnabled = true
         }
         webView.setBackgroundColor(Color.BLACK)
 
@@ -322,7 +331,8 @@ class MainActivity : AppCompatActivity() {
         }
         val token = analysisGate.capture(url)
         webView.evaluateJavascript(
-            "(document.documentElement && document.documentElement.outerHTML) || ''"
+            "(() => { const root = document.querySelector('article, main') || document.body || document.documentElement; " +
+                "return root ? root.outerHTML.slice(0, 1500000) : ''; })()"
         ) { rawHtml ->
             if (analysisExecutor.isShutdown || !analysisGate.isCurrent(token, webView.url)) {
                 return@evaluateJavascript
@@ -335,7 +345,7 @@ class MainActivity : AppCompatActivity() {
                 return@evaluateJavascript
             }
 
-            analysisExecutor.execute {
+            runCatching { analysisExecutor.execute {
                 val result = runCatching {
                     factEngine.evaluate(articleExtractor.extract(html, url))
                 }.getOrNull()
@@ -344,7 +354,7 @@ class MainActivity : AppCompatActivity() {
                     if (result == null) showFactPending("NIE WIEM • analiza nie powiodła się")
                     else showFactResult(result)
                 }
-            }
+            } }
         }
     }
 
@@ -395,9 +405,22 @@ class MainActivity : AppCompatActivity() {
         }.joinToString("\n") { "• ${it.description}" }
         val sources = if (result.sources.isEmpty()) "• brak dostępnych źródeł"
         else result.sources.joinToString("\n") { "• ${it.name}: ${it.url}" }
+        val primarySet = result.evidenceSets.firstOrNull { it.claim.type == pl.sael.browser.fact.claim.ClaimType.FACTUAL }
+        val claimText = primarySet?.claim?.text ?: result.claims.firstOrNull()?.text ?: "Brak konkretnego twierdzenia."
+        val supports = primarySet?.supports.orEmpty().flatMap { it.items }
+        val refutes = primarySet?.refutes.orEmpty().flatMap { it.items }
+        fun evidenceLines(items: List<pl.sael.browser.fact.evidence.EvidenceItem>): String =
+            if (items.isEmpty()) "• brak" else items.joinToString("\n") {
+                "• ${it.summary} (${it.sourceType}, ${it.publicationDate ?: "data nieznana"})\n  ${it.publisher}: ${it.url}"
+            }
+        val evidenceNotice = primarySet?.message ?: "Brak wystarczających dowodów."
         val clickbaitReasons = if (result.clickbait.reasons.isEmpty()) "brak wyraźnych sygnałów"
         else result.clickbait.reasons.joinToString("; ")
         val message = buildString {
+            appendLine("TWIERDZENIE")
+            appendLine(claimText)
+            appendLine()
+            appendLine("WERDYKT: $verdict")
             appendLine("Pewność: ${(result.confidence * 100).roundToInt()}%")
             appendLine("Pochodzenie: $origin")
             appendLine()
@@ -408,6 +431,14 @@ class MainActivity : AppCompatActivity() {
             appendLine()
             appendLine("Źródła:")
             appendLine(sources)
+            appendLine()
+            appendLine("DOWODY ZA")
+            appendLine(evidenceLines(supports))
+            appendLine()
+            appendLine("DOWODY PRZECIW")
+            appendLine(evidenceLines(refutes))
+            appendLine()
+            appendLine(evidenceNotice)
             appendLine()
             append("Clickbait ${(result.clickbait.score * 100).roundToInt()}%: $clickbaitReasons")
         }

@@ -136,6 +136,45 @@ class FactEngineTest {
         assertEquals(0.82, result.confidence, 0.0001)
     }
 
+    @Test
+    fun `resolved claim cannot make whole article true while another factual claim is unresolved`() {
+        val first = pl.sael.browser.fact.claim.Claim(
+            "first", "Inflacja wynosi 3,1%.", pl.sael.browser.fact.claim.ClaimType.FACTUAL,
+            1.0, "Inflacja wynosi 3,1%."
+        )
+        val second = pl.sael.browser.fact.claim.Claim(
+            "second", "Bezrobocie wynosi 4,0%.", pl.sael.browser.fact.claim.ClaimType.FACTUAL,
+            0.9, "Bezrobocie wynosi 4,0%."
+        )
+        val evidenceProvider = object : pl.sael.browser.fact.evidence.EvidenceProvider {
+            override val id = "independent-test"
+            override fun findEvidence(query: pl.sael.browser.fact.evidence.EvidenceQuery): List<pl.sael.browser.fact.evidence.EvidenceItem> {
+                if (query.claim.id != first.id) return emptyList()
+                return listOf("official.example", "academic.example").mapIndexed { index, domain ->
+                    pl.sael.browser.fact.evidence.EvidenceItem(
+                        first.id, "Niezależny dokument ${index + 1} potwierdza wartość.",
+                        "https://$domain/result", domain, "Publisher $index",
+                        publicationDate = "2026-08-30", eventDate = "2026-08-30",
+                        sourceType = if (index == 0) pl.sael.browser.fact.evidence.SourceType.PRIMARY_OFFICIAL
+                            else pl.sael.browser.fact.evidence.SourceType.ACADEMIC,
+                        stance = pl.sael.browser.fact.evidence.EvidenceStance.SUPPORTS,
+                        confidence = 0.99,
+                        provenance = pl.sael.browser.fact.evidence.EvidenceProvenance.TEST_FAKE,
+                        direct = true
+                    )
+                }
+            }
+        }
+        val result = ThresholdFactEngine(
+            providers = emptyList(),
+            claimExtractor = object : pl.sael.browser.fact.claim.ClaimExtractor {
+                override fun extract(title: String, content: String, articleDate: String?) = listOf(first, second)
+            },
+            evidenceEngine = pl.sael.browser.fact.evidence.EvidenceEngine(listOf(evidenceProvider))
+        ).evaluate(article)
+        assertEquals(FactVerdict.UNKNOWN, result.verdict)
+    }
+
     private fun provider(stance: EvidenceStance, strength: Double) = object : FactEvidenceProvider {
         override val origin = ResultOrigin.EXTERNAL_SOURCE
         override fun collect(article: ArticleInput, clickbait: ClickbaitResult) = listOf(

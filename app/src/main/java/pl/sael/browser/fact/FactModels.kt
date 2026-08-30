@@ -10,7 +10,9 @@ enum class EvidenceProvenance { PAGE_CONTENT, INDEPENDENT_SOURCE, LOCAL_VERIFIED
 
 data class FactSource(
     val name: String,
-    val url: String
+    val url: String,
+    val publishedAt: String? = null,
+    val sourceType: String? = null
 )
 
 data class StructuredFactCheck(
@@ -52,7 +54,9 @@ data class FactResult(
     val evidence: List<FactEvidence>,
     val sources: List<FactSource>,
     val origin: ResultOrigin,
-    val clickbait: ClickbaitResult
+    val clickbait: ClickbaitResult,
+    val claims: List<pl.sael.browser.fact.claim.Claim> = emptyList(),
+    val evidenceSets: List<pl.sael.browser.fact.evidence.EvidenceSet> = emptyList()
 )
 
 interface ArticleExtractor {
