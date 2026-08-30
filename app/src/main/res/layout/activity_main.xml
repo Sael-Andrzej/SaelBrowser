@@ -17,9 +17,17 @@
 
         <Button
             android:id="@+id/backButton"
-            android:layout_width="48dp"
+            android:layout_width="44dp"
             android:layout_height="44dp"
             android:text="←"
+            android:textSize="20sp" />
+
+        <Button
+            android:id="@+id/forwardButton"
+            android:layout_width="44dp"
+            android:layout_height="44dp"
+            android:layout_marginStart="4dp"
+            android:text="→"
             android:textSize="20sp" />
 
         <EditText
@@ -35,7 +43,7 @@
             android:paddingStart="14dp"
             android:paddingEnd="14dp"
             android:textColor="#F5F2E4"
-            android:hintTextColor="#718077"
+            android:textColorHint="#718077"
             android:background="#0C2115" />
 
         <Button
@@ -84,6 +92,15 @@
         android:textColor="#E6C86B"
         android:textSize="13sp"
         android:background="#07130C" />
+
+    <Button
+        android:id="@+id/factResultButton"
+        android:layout_width="match_parent"
+        android:layout_height="44dp"
+        android:text="NIE WIEM • analiza oczekuje"
+        android:textStyle="bold"
+        android:textColor="#151515"
+        android:backgroundTint="#FFD54A" />
 
     <!-- STRONA -->
     <WebView
