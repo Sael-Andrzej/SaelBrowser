@@ -9,13 +9,20 @@ class ThresholdFactEngine(
     private val verdictThreshold: Double = DEFAULT_VERDICT_THRESHOLD,
     private val claimExtractor: pl.sael.browser.fact.claim.ClaimExtractor =
         pl.sael.browser.fact.claim.LocalClaimExtractor(),
+    remoteEvidenceProvider: pl.sael.browser.fact.evidence.EvidenceProvider =
+        pl.sael.browser.network.RemoteEvidenceProvider.configured(
+            pl.sael.browser.BuildConfig.SAEL_BACKEND_URL
+        ),
     private val evidenceEngine: pl.sael.browser.fact.evidence.EvidenceEngine =
         pl.sael.browser.fact.evidence.EvidenceEngine(
             listOf(
                 pl.sael.browser.fact.providers.FactCheckApiProvider(),
-                pl.sael.browser.fact.providers.WebSearchProvider()
+                pl.sael.browser.fact.providers.WebSearchProvider(),
+                remoteEvidenceProvider
             )
-        )
+        ),
+    private val localOnlyEvidenceEngine: pl.sael.browser.fact.evidence.EvidenceEngine =
+        pl.sael.browser.fact.evidence.EvidenceEngine(emptyList())
 ) : FactEngine {
     init {
         require(verdictThreshold in 0.5..1.0)
@@ -24,7 +31,15 @@ class ThresholdFactEngine(
     override fun evaluate(article: ArticleInput): FactResult {
         val clickbait = clickbaitAnalyzer.analyze(article.title, article.content)
         val claims = claimExtractor.extract(article.title, article.content, article.publishedAt)
-        val evidenceSets = claims.map { claim -> evidenceEngine.evaluate(claim, article.url, article.domain) }
+        val remoteClaimIds = claims
+            .filter { it.type == pl.sael.browser.fact.claim.ClaimType.FACTUAL }
+            .take(MAX_REMOTE_CLAIMS)
+            .map { it.id }
+            .toSet()
+        val evidenceSets = claims.map { claim ->
+            val engine = if (claim.id in remoteClaimIds) evidenceEngine else localOnlyEvidenceEngine
+            engine.evaluate(claim, article.url, article.domain)
+        }
         val collected = providers.map { provider -> provider to provider.collect(article, clickbait) }
         val evidence = collected.flatMap { it.second }
         val trueEvidence = evidence.filter {
@@ -127,5 +142,6 @@ class ThresholdFactEngine(
     companion object {
         const val DEFAULT_VERDICT_THRESHOLD = 0.8
         private const val UNKNOWN_CONFIDENCE_CAP = 0.49
+        private const val MAX_REMOTE_CLAIMS = 3
     }
 }

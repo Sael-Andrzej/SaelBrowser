@@ -175,6 +175,81 @@ class FactEngineTest {
         assertEquals(FactVerdict.UNKNOWN, result.verdict)
     }
 
+    @Test
+    fun `remote evidence is requested for at most three factual claims`() {
+        val factualClaims = (1..5).map { index ->
+            pl.sael.browser.fact.claim.Claim(
+                "claim-$index", "Twierdzenie numer $index wynosi $index.",
+                pl.sael.browser.fact.claim.ClaimType.FACTUAL, 1.0 - index * 0.01,
+                "Twierdzenie numer $index wynosi $index."
+            )
+        }
+        val claims = listOf(
+            factualClaims[0],
+            factualClaims[1].copy(id = "opinion", type = pl.sael.browser.fact.claim.ClaimType.OPINION),
+            factualClaims[1],
+            factualClaims[2].copy(id = "prediction", type = pl.sael.browser.fact.claim.ClaimType.PREDICTION),
+            factualClaims[2],
+            factualClaims[3].copy(id = "unknown", type = pl.sael.browser.fact.claim.ClaimType.UNKNOWN),
+            factualClaims[3], factualClaims[4]
+        )
+        val requestedClaims = mutableListOf<String>()
+        val counter = object : pl.sael.browser.fact.evidence.EvidenceProvider {
+            override val id = "counter"
+            override fun findEvidence(query: pl.sael.browser.fact.evidence.EvidenceQuery): List<pl.sael.browser.fact.evidence.EvidenceItem> {
+                requestedClaims += query.claim.id
+                return emptyList()
+            }
+        }
+        ThresholdFactEngine(
+            providers = emptyList(),
+            claimExtractor = object : pl.sael.browser.fact.claim.ClaimExtractor {
+                override fun extract(title: String, content: String, articleDate: String?) = claims
+            },
+            remoteEvidenceProvider = counter
+        ).evaluate(article)
+        assertEquals(factualClaims.take(3).map { it.id }, requestedClaims)
+    }
+
+    @Test
+    fun `unqueried fourth factual claim remains unresolved and blocks remote verdict`() {
+        val claims = (1..4).map { index ->
+            pl.sael.browser.fact.claim.Claim(
+                "claim-$index", "Wskaźnik numer $index wynosi $index.",
+                pl.sael.browser.fact.claim.ClaimType.FACTUAL, 1.0,
+                "Wskaźnik numer $index wynosi $index.", claimDate = "2026-08-30"
+            )
+        }
+        val strongRemote = object : pl.sael.browser.fact.evidence.EvidenceProvider {
+            override val id = "strong-remote"
+            override fun findEvidence(query: pl.sael.browser.fact.evidence.EvidenceQuery) =
+                listOf("official.example", "academic.example").mapIndexed { index, domain ->
+                    pl.sael.browser.fact.evidence.EvidenceItem(
+                        query.claim.id, if (index == 0)
+                            "Oficjalny rejestr publikuje potwierdzoną wartość wskaźnika."
+                        else "Niezależna analiza akademicka odtwarza rezultat pomiaru.",
+                        "https://$domain/${query.claim.id}", domain, "Publisher $index",
+                        publicationDate = query.claim.claimDate,
+                        sourceType = if (index == 0) pl.sael.browser.fact.evidence.SourceType.PRIMARY_OFFICIAL
+                            else pl.sael.browser.fact.evidence.SourceType.ACADEMIC,
+                        stance = pl.sael.browser.fact.evidence.EvidenceStance.SUPPORTS,
+                        confidence = 0.99,
+                        provenance = pl.sael.browser.fact.evidence.EvidenceProvenance.TEST_FAKE,
+                        direct = true
+                    )
+                }
+        }
+        val result = ThresholdFactEngine(
+            providers = emptyList(),
+            claimExtractor = object : pl.sael.browser.fact.claim.ClaimExtractor {
+                override fun extract(title: String, content: String, articleDate: String?) = claims
+            },
+            remoteEvidenceProvider = strongRemote
+        ).evaluate(article)
+        assertEquals(4, result.evidenceSets.size)
+        assertEquals(FactVerdict.UNKNOWN, result.verdict)
+    }
+
     private fun provider(stance: EvidenceStance, strength: Double) = object : FactEvidenceProvider {
         override val origin = ResultOrigin.EXTERNAL_SOURCE
         override fun collect(article: ArticleInput, clickbait: ClickbaitResult) = listOf(

@@ -1,0 +1,32 @@
+services:
+  sael-evidence:
+    build:
+      context: .
+    image: ${SAEL_IMAGE:-sael-evidence-backend:local}
+    restart: unless-stopped
+    env_file:
+      - path: ${SAEL_ENV_FILE:-.env}
+        required: false
+    ports:
+      - "127.0.0.1:${SAEL_BACKEND_PORT:?Set SAEL_BACKEND_PORT after checking occupied ports}:8080"
+    read_only: true
+    tmpfs:
+      - /tmp:size=16m,noexec,nosuid,nodev
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 128
+    mem_limit: 256m
+    cpus: 1.0
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8080/health', timeout=2)"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
