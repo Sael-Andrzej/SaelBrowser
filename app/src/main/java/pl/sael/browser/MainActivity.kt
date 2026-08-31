@@ -190,6 +190,9 @@ class MainActivity : AppCompatActivity() {
         backButton.setOnClickListener { navigate(NavigationDirection.BACK) }
         forwardButton.setOnClickListener { navigate(NavigationDirection.FORWARD) }
         factResultButton.setOnClickListener { latestFactResult?.let(::showFactDetails) }
+        findViewById<Button>(R.id.privacyButton).setOnClickListener {
+            loadAddress(PRIVACY_POLICY_URL)
+        }
 
         originalButton.setOnClickListener {
             if (!modeState.select(BrowserMode.ORIGINAL)) return@setOnClickListener
@@ -458,6 +461,8 @@ class MainActivity : AppCompatActivity() {
 
     companion object {
         private const val STATE_MODE = "sael.browser.mode"
+        private const val PRIVACY_POLICY_URL =
+            "https://sael-andrzej.github.io/SaelBrowser/privacy.html"
         private val STATUS_SAEL = Color.rgb(230, 200, 107)
         private val STATUS_NEUTRAL = Color.LTGRAY
         private val STATUS_ERROR = Color.rgb(255, 110, 110)

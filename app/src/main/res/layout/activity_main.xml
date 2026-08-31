@@ -102,6 +102,16 @@
         android:textColor="#151515"
         android:backgroundTint="#FFD54A" />
 
+    <Button
+        android:id="@+id/privacyButton"
+        android:layout_width="match_parent"
+        android:layout_height="36dp"
+        android:minHeight="0dp"
+        android:text="POLITYKA PRYWATNOŚCI"
+        android:textSize="11sp"
+        android:textColor="#AFC2B4"
+        android:backgroundTint="#07130C" />
+
     <!-- STRONA -->
     <WebView
         android:id="@+id/webView"

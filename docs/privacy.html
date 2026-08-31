@@ -1,0 +1,55 @@
+<!doctype html>
+<html lang="pl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Polityka prywatności — SaelBrowser</title>
+  <style>
+    body{max-width:760px;margin:0 auto;padding:32px 20px;background:#06100b;color:#eef7ef;
+      font:16px/1.6 system-ui,sans-serif}a{color:#83ff72}h1,h2{color:#f2dc91}
+    code{color:#d8e8dc}small{color:#91a99a}
+  </style>
+</head>
+<body>
+  <h1>Polityka prywatności SaelBrowser</h1>
+  <p><small>Obowiązuje od 31 sierpnia 2026 r.</small></p>
+
+  <p>SaelBrowser jest przeglądarką z lokalną analizą treści oraz opcjonalnym
+  wyszukiwaniem niezależnych materiałów w usłudze SAEL Evidence Backend.
+  Operatorem aplikacji i backendu jest projekt SaelBrowser. Kontakt jest
+  dostępny przez <a href="https://github.com/Sael-Andrzej/SaelBrowser/issues">repozytorium projektu</a>.</p>
+
+  <h2>Dane przetwarzane przez aplikację</h2>
+  <p>Aplikacja nie wymaga konta, nie zawiera reklam ani bibliotek analitycznych.
+  Historia i dane stron odwiedzanych w WebView pozostają na urządzeniu zgodnie
+  z ustawieniami Android System WebView. Odwiedzane witryny działają niezależnie
+  i mogą stosować własne zasady prywatności oraz pliki cookie.</p>
+
+  <h2>Analiza dowodów</h2>
+  <p>Dla twierdzeń wyodrębnionych z otwartej strony aplikacja może przesłać do
+  backendu: tekst twierdzenia (maksymalnie 500 znaków), kod języka, datę
+  twierdzenia lub publikacji, jeśli jest dostępna, oraz wyłącznie publiczne
+  pochodzenie strony w postaci HTTPS (protokół, domena i opcjonalny port — bez
+  pełnej ścieżki, parametrów i fragmentu adresu). Dane te służą wyłącznie do
+  wyszukania materiałów dotyczących danego twierdzenia.</p>
+
+  <p>Backend może przekazać tekst twierdzenia dostawcy Google Fact Check Tools.
+  Dostawca otrzymuje zapytanie od serwera SAEL, nie bezpośrednio z urządzenia.
+  SaelBrowser nie sprzedaje danych użytkowników.</p>
+
+  <h2>Retencja i logi techniczne</h2>
+  <p>Wyniki zapytań są przechowywane wyłącznie w pamięci backendu przez około
+  15 minut. Serwer WWW zapisuje standardowe logi bezpieczeństwa i diagnostyki,
+  obejmujące adres IP, czas, ścieżkę endpointu, kod odpowiedzi i identyfikator
+  klienta. Logi podlegają codziennej rotacji i przechowywaniu do 14 rotacji.
+  Nie są wykorzystywane do profilowania ani reklamy.</p>
+
+  <h2>Bezpieczeństwo i prawa użytkownika</h2>
+  <p>Połączenie z backendem korzysta z HTTPS. Użytkownik może usunąć lokalne dane
+  aplikacji w ustawieniach Androida lub odinstalować aplikację. Pytania i żądania
+  dotyczące danych można zgłaszać przez wskazany kanał kontaktu. Polityka może
+  zostać zaktualizowana wraz ze zmianą sposobu działania aplikacji.</p>
+
+  <p><a href="index.html">Powrót do strony SAEL</a></p>
+</body>
+</html>
