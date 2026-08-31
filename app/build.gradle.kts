@@ -3,6 +3,17 @@ plugins {
     id("org.jetbrains.kotlin.android")
 }
 
+val releaseStoreFile = providers.environmentVariable("SAEL_RELEASE_STORE_FILE").orNull
+val releaseStorePassword = providers.environmentVariable("SAEL_RELEASE_STORE_PASSWORD").orNull
+val releaseKeyAlias = providers.environmentVariable("SAEL_RELEASE_KEY_ALIAS").orNull
+val releaseKeyPassword = providers.environmentVariable("SAEL_RELEASE_KEY_PASSWORD").orNull
+val releaseSigningConfigured = listOf(
+    releaseStoreFile,
+    releaseStorePassword,
+    releaseKeyAlias,
+    releaseKeyPassword
+).all { !it.isNullOrBlank() }
+
 android {
     buildFeatures {
         buildConfig = true
@@ -38,6 +49,37 @@ android {
             "SAEL_BACKEND_FALLBACK_URL",
             "\"${escapedBuildConfig(fallbackBackendUrl)}\""
         )
+    }
+
+    signingConfigs {
+        if (releaseSigningConfigured) {
+            create("release") {
+                storeFile = file(requireNotNull(releaseStoreFile))
+                storePassword = releaseStorePassword
+                keyAlias = releaseKeyAlias
+                keyPassword = releaseKeyPassword
+                enableV1Signing = true
+                enableV2Signing = true
+            }
+        }
+    }
+
+    buildTypes {
+        getByName("release") {
+            if (releaseSigningConfigured) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
+    }
+}
+
+tasks.configureEach {
+    if (name in setOf("packageRelease", "bundleRelease", "assembleRelease")) {
+        doFirst {
+            check(releaseSigningConfigured) {
+                "Release signing is not configured. Set all SAEL_RELEASE_* environment variables."
+            }
+        }
     }
 }
 

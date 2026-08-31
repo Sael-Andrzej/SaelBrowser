@@ -8,3 +8,8 @@ ERROR.txt
 SAEL_BUILD*.log
 SAEL_ERROR.txt
 _backups/
+
+# Klucze i lokalne dane podpisywania Androida nigdy nie trafiają do Git.
+*.jks
+*.keystore
+keystore.properties
