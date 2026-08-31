@@ -36,11 +36,20 @@ class RemoteEvidenceProvider(
     companion object {
         private const val MAX_CLAIM_LENGTH = 500
 
-        fun configured(baseUrl: String): RemoteEvidenceProvider {
-            val transport = baseUrl.takeIf(String::isNotBlank)?.let {
-                runCatching {
-                    HttpEvidenceApiTransport(it, allowDebugLoopbackHttp = pl.sael.browser.BuildConfig.DEBUG)
-                }.getOrNull()
+        fun configured(primaryBaseUrl: String, fallbackBaseUrl: String = ""): RemoteEvidenceProvider {
+            val transports = listOf(primaryBaseUrl, fallbackBaseUrl)
+                .map(String::trim)
+                .filter(String::isNotBlank)
+                .distinct()
+                .mapNotNull {
+                    runCatching {
+                        HttpEvidenceApiTransport(it, allowDebugLoopbackHttp = pl.sael.browser.BuildConfig.DEBUG)
+                    }.getOrNull()
+                }
+            val transport = when (transports.size) {
+                0 -> null
+                1 -> transports.single()
+                else -> FailoverEvidenceApiTransport(transports)
             }
             return RemoteEvidenceProvider(transport)
         }

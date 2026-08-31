@@ -11,7 +11,8 @@ class ThresholdFactEngine(
         pl.sael.browser.fact.claim.LocalClaimExtractor(),
     remoteEvidenceProvider: pl.sael.browser.fact.evidence.EvidenceProvider =
         pl.sael.browser.network.RemoteEvidenceProvider.configured(
-            pl.sael.browser.BuildConfig.SAEL_BACKEND_URL
+            pl.sael.browser.BuildConfig.SAEL_BACKEND_URL,
+            pl.sael.browser.BuildConfig.SAEL_BACKEND_FALLBACK_URL
         ),
     private val evidenceEngine: pl.sael.browser.fact.evidence.EvidenceEngine =
         pl.sael.browser.fact.evidence.EvidenceEngine(
