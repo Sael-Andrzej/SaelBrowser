@@ -1,7 +1,7 @@
 {
   "name":"SAEL",
   "short_name":"SAEL",
-  "description":"Załóż okulary na świat.",
+  "description":"Przeglądarka, która porządkuje Internet i szuka dowodów. Android dostępny, Windows w przygotowaniu.",
   "start_url":"./",
   "display":"standalone",
   "background_color":"#041009",
