@@ -1,0 +1,16 @@
+SAELBROWSER DLA WINDOWS — NIEPODPISANA WERSJA BETA
+
+SaelBrowser.exe i instalator MSI nie mają podpisu Authenticode. Microsoft Defender
+SmartScreen może wyświetlić ostrzeżenie o nierozpoznanej aplikacji, a zasady
+bezpieczeństwa zarządzanego komputera mogą uniemożliwić jej uruchomienie.
+
+Pobieraj tę wersję wyłącznie z oficjalnego repozytorium:
+https://github.com/Sael-Andrzej/SaelBrowser
+
+Przed instalacją oblicz SHA-256 pliku MSI i porównaj wynik z SHA256SUMS.txt.
+Nie instaluj pliku, jeżeli sumy są różne. Zgodna suma potwierdza integralność
+pobranego pliku względem artefaktu CI, ale nie zastępuje podpisu zweryfikowanego
+wydawcy.
+
+Nie wyłączaj globalnie SmartScreen, programu antywirusowego ani innych zabezpieczeń
+Windows.

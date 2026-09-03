@@ -17,6 +17,27 @@ samodzielna dla `win-x64`; wymaga aktualnego Microsoft Edge WebView2 Evergreen R
 Jeżeli runtime nie jest dostępny, aplikacja wyświetla jednoznaczny komunikat zamiast
 próbować użyć innego lub nieweryfikowanego silnika.
 
+## Niepodpisana wersja beta
+
+Obecne pliki `SaelBrowser.exe` i MSI nie mają podpisu Authenticode. Microsoft
+Defender SmartScreen może więc wyświetlić ostrzeżenie o nierozpoznanej aplikacji,
+a polityka zarządzanego komputera może całkowicie zablokować jej uruchomienie.
+
+Pobieraj betę wyłącznie z oficjalnego GitHub Actions lub GitHub Releases projektu
+`Sael-Andrzej/SaelBrowser`. Przed instalacją porównaj SHA-256 pliku MSI z wartością
+w dołączonym `SHA256SUMS.txt`, na przykład:
+
+```powershell
+$expected = (Get-Content .\SHA256SUMS.txt).Split()[0]
+$actual = (Get-FileHash .\SaelBrowser-0.1.0-win-x64.msi -Algorithm SHA256).Hash
+if ($actual -ne $expected) { throw "Suma SHA-256 nie jest zgodna." }
+```
+
+Nie instaluj pliku, jeżeli sumy są różne. Zgodna suma potwierdza integralność
+pobranego MSI względem artefaktu CI, ale nie potwierdza tożsamości wydawcy tak jak
+podpis cyfrowy. Nie wyłączaj globalnie SmartScreen, programu antywirusowego ani
+innych zabezpieczeń Windows.
+
 ## Zasady bezpieczeństwa
 
 - treść stron jest niezaufanym wejściem,

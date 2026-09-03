@@ -44,13 +44,41 @@ jobs:
           if ($checks.Value -contains $false) { throw 'Windows E2E reported a failed check' }
       - name: Build MSI installer
         run: dotnet build windows/installer/SaelBrowser.Installer/SaelBrowser.Installer.wixproj -c Release
+      - name: Confirm unsigned beta artifacts
+        shell: pwsh
+        run: |
+          $msi = @(Get-ChildItem 'windows/artifacts/installer/*.msi')
+          if ($msi.Count -ne 1) { throw "Expected exactly one MSI, found $($msi.Count)" }
+          $files = @(
+            Get-Item 'windows/artifacts/publish/win-x64/SaelBrowser.exe'
+            $msi[0]
+          )
+          foreach ($file in $files) {
+            $signature = Get-AuthenticodeSignature -LiteralPath $file.FullName
+            if ($signature.Status -ne 'NotSigned') {
+              throw "Unsigned beta expects NotSigned for $($file.Name), got $($signature.Status)"
+            }
+          }
       - name: Calculate SHA-256
         shell: pwsh
-        run: Get-FileHash windows/artifacts/installer/*.msi -Algorithm SHA256 | Format-List | Out-File windows/artifacts/installer/SHA256SUMS.txt
+        run: |
+          $msi = @(Get-ChildItem 'windows/artifacts/installer/*.msi')
+          if ($msi.Count -ne 1) { throw "Expected exactly one MSI, found $($msi.Count)" }
+          $hash = (Get-FileHash -LiteralPath $msi[0].FullName -Algorithm SHA256).Hash
+          "$hash *$($msi[0].Name)" | Set-Content 'windows/artifacts/installer/SHA256SUMS.txt'
+      - name: Verify SHA-256
+        shell: pwsh
+        run: |
+          $line = (Get-Content 'windows/artifacts/installer/SHA256SUMS.txt' -Raw).Trim()
+          if ($line -notmatch '^([A-Fa-f0-9]{64}) \*(.+\.msi)$') { throw 'Invalid SHA256SUMS.txt format' }
+          $msi = Join-Path 'windows/artifacts/installer' $Matches[2]
+          $actual = (Get-FileHash -LiteralPath $msi -Algorithm SHA256).Hash
+          if ($actual -ne $Matches[1]) { throw 'MSI SHA-256 verification failed' }
       - uses: actions/upload-artifact@v4
         with:
-          name: SaelBrowser-Windows-MSI
+          name: SaelBrowser-Windows-Unsigned-Beta
           path: |
             windows/artifacts/installer/*.msi
             windows/artifacts/installer/SHA256SUMS.txt
+            windows/UNSIGNED-BETA-NOTICE.txt
           if-no-files-found: error
