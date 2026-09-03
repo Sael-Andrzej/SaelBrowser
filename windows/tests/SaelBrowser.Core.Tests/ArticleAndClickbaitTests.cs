@@ -46,6 +46,15 @@ public sealed class ArticleAndClickbaitTests
     }
 
     [Fact]
+    public async Task ExtractorPreservesReadableDomBlockBoundaries()
+    {
+        const string html = "<article><p>First report was published.[8]</p><h2>Historical context</h2><p>Second report was published.</p></article>";
+        var result = await new ArticleExtractor().ExtractAsync(html, "https://example.test/article");
+        Assert.Equal(new[] { "First report was published.[8]", "Historical context.", "Second report was published." },
+            result.Content.Split(Environment.NewLine));
+    }
+
+    [Fact]
     public async Task GoogleSearchUsesTheQueryAsPrimaryClaimTitle()
     {
         const string html = "<html><head><title>zmarł schwarzenegger - Szukaj w Google</title></head><body><form><input name='q' value='zmarł schwarzenegger'></form><main>Wyniki wyszukiwania <a href='https://snopes.com/fact-check/arnold'>Snopes</a></main></body></html>";
@@ -104,6 +113,48 @@ public sealed class ArticleAndClickbaitTests
     {
         var claims = new ClaimExtractor().Extract(new(statement, statement, "https://x.example", "x.example"));
         Assert.Contains(claims, claim => claim.Text == statement);
+    }
+
+    [Fact]
+    public void WikipediaFootnotesSeparateIndependentSentencesAndStayWithPreviousSentence()
+    {
+        var content = "The Earth was flat.[8] This myth was created later.[9]";
+        var claims = new ClaimExtractor().Extract(new("", content, "https://en.wikipedia.org/wiki/Flat_Earth", "wikipedia.org"));
+        Assert.Contains(claims, claim => claim.Text == "The Earth was flat.[8]");
+        Assert.Contains(claims, claim => claim.Text == "This myth was created later.[9]");
+        Assert.DoesNotContain(claims, claim => claim.Text.Contains("[8] This", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void HistoricalCircaAbbreviationDoesNotCreateAnEraSuffixFragment()
+    {
+        const string sentence = "Anaximenes of Miletus (c. 550–500 BC) thought that the Earth was flat.[41]";
+        var claims = new ClaimExtractor().Extract(new("", sentence, "https://en.wikipedia.org/wiki/Flat_Earth", "wikipedia.org"));
+        Assert.Single(claims);
+        Assert.Equal(sentence, claims[0].Text);
+        Assert.DoesNotContain(claims, claim => claim.Text.StartsWith("500 BC)", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Theory]
+    [InlineData("Dr. John Smith reported a value of 3.14% on 07.06.2023.")]
+    [InlineData("Prof. J. Smith reported that version 1.2.3 is stable.")]
+    [InlineData("The U.S. report was published by J. Smith.")]
+    [InlineData("The result was described e.g. in the official report.")]
+    public void AbbreviationsInitialsDecimalsDatesAndVersionsRemainSingleSentences(string sentence)
+    {
+        var claims = new ClaimExtractor().Extract(new("", sentence, "https://example.test", "example.test"));
+        Assert.Single(claims);
+        Assert.Equal(sentence, claims[0].Text);
+    }
+
+    [Theory]
+    [InlineData("500 BC) thought that the Earth was flat.[41]")]
+    [InlineData("[41] claimed that the Earth was flat.")]
+    [InlineData(") maintained that the Earth was flat.")]
+    public void ObviousSubjectlessContinuationIsRejected(string fragment)
+    {
+        var claims = new ClaimExtractor().Extract(new("", fragment, "https://example.test", "example.test"));
+        Assert.Empty(claims);
     }
 
     [Fact]

@@ -74,9 +74,20 @@ public sealed class ArticleExtractor : IArticleExtractor
             .Where(element => !element.Ancestors().OfType<IElement>().Any(ancestor => ancestor != root && ancestor.Matches("p,li")))
             .Select(element => Normalize(element.TextContent))
             .Where(text => text.Length >= 8)
-            .Select(text => ".!?".Contains(text[^1]) ? text : text + ".")
+            .Select(text => EndsWithSentencePunctuation(text) ? text : text + ".")
             .ToArray();
-        return Normalize(blocks.Length > 0 ? string.Join(' ', blocks) : root.TextContent);
+        return blocks.Length > 0 ? string.Join(Environment.NewLine, blocks) : Normalize(root.TextContent);
+    }
+    private static bool EndsWithSentencePunctuation(string text)
+    {
+        var index = text.Length - 1;
+        while (index >= 0 && text[index] == ']')
+        {
+            var open = text.LastIndexOf('[', index);
+            if (open < 0 || !text.AsSpan(open + 1, index - open - 1).ToString().All(char.IsDigit)) break;
+            index = open - 1;
+        }
+        return index >= 0 && ".!?".Contains(text[index]);
     }
     private static string RemoveWww(string value) => value.StartsWith("www.", StringComparison.OrdinalIgnoreCase) ? value[4..] : value;
     private static bool IsSearchPage(Uri? uri) => uri is not null && (uri.Host.Equals("google.com", StringComparison.OrdinalIgnoreCase) || uri.Host.EndsWith(".google.com", StringComparison.OrdinalIgnoreCase));

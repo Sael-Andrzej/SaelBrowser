@@ -39,6 +39,25 @@ public sealed class ArticleAnalysisTests
     }
 
     [Fact]
+    public void FlatEarthWikipediaProducesSeparateCompleteClaimCandidates()
+    {
+        var article = new ArticleInput("Flat Earth - Wikipedia", """
+            Ancient Chinese scholars described the Earth as flat.[6] Muslim scholars maintained that the Earth was flat.
+            It is a historical myth that medieval Europeans thought the Earth was flat.[8] This myth was created in the 17th century.[9]
+            """, "https://en.wikipedia.org/wiki/Flat_Earth", "wikipedia.org");
+        var extractor = new ClaimExtractor();
+        var candidates = extractor.Extract(article);
+        Assert.Contains(candidates, claim => claim.Text == "Ancient Chinese scholars described the Earth as flat.[6]");
+        Assert.Contains(candidates, claim => claim.Text == "Muslim scholars maintained that the Earth was flat.");
+        Assert.Contains(candidates, claim => claim.Text == "It is a historical myth that medieval Europeans thought the Earth was flat.[8]");
+        Assert.Contains(candidates, claim => claim.Text == "This myth was created in the 17th century.[9]");
+        var claims = new ClaimDecomposer(extractor, 4).Decompose(article);
+        Assert.InRange(claims.Count, 1, 4);
+        Assert.All(claims, claim => Assert.DoesNotContain("] ", claim.Text));
+        Assert.DoesNotContain(claims, claim => claim.Text.StartsWith("500 BC)", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task EachClaimGetsIndependentVerdictAndResultsAreProgressive()
     {
         var provider = new DeterministicEvidenceProvider();
