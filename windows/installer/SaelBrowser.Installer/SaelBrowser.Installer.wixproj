@@ -1,0 +1,13 @@
+<Project Sdk="WixToolset.Sdk/5.0.2">
+  <PropertyGroup>
+    <OutputType>Package</OutputType>
+    <Platform>x64</Platform>
+    <InstallerPlatform>x64</InstallerPlatform>
+    <OutputName>SaelBrowser-0.1.0-win-x64</OutputName>
+    <OutputPath>../../artifacts/installer/</OutputPath>
+    <PublishDirectory>$([System.IO.Path]::GetFullPath('$(MSBuildProjectDirectory)/../../artifacts/publish/win-x64'))</PublishDirectory>
+  </PropertyGroup>
+  <ItemGroup>
+    <BindPath Include="$(PublishDirectory)"><BindName>publish</BindName></BindPath>
+  </ItemGroup>
+</Project>

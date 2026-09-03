@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/SaelBrowser.Core/SaelBrowser.Core.csproj" />
+  <Project Path="src/SaelBrowser.Windows/SaelBrowser.Windows.csproj" />
+  <Project Path="tests/SaelBrowser.Core.Tests/SaelBrowser.Core.Tests.csproj" />
+  <Project Path="installer/SaelBrowser.Installer/SaelBrowser.Installer.wixproj" />
+</Solution>

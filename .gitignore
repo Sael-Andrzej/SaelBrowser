@@ -9,6 +9,20 @@ SAEL_BUILD*.log
 SAEL_ERROR.txt
 _backups/
 
+# Lokalne produkty kompilacji, publikacji i testów Windows.
+windows/**/bin/
+windows/**/obj/
+windows/artifacts/
+windows/**/TestResults/
+windows/**/.vs/
+windows/**/publish/
+windows/**/*.msi
+windows/**/*.wixpdb
+windows/**/*.log
+windows/**/*-e2e.json
+windows/**/*-self-test.json
+windows/**/*-trace.json
+
 # Klucze i lokalne dane podpisywania Androida nigdy nie trafiają do Git.
 *.jks
 *.keystore

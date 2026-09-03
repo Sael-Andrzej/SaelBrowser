@@ -1,0 +1,23 @@
+<Wix xmlns="http://wixtoolset.org/schemas/v4/wxs">
+  <Package Name="SaelBrowser" Manufacturer="SAEL" Version="0.1.0" Language="1045"
+           UpgradeCode="783965E0-5597-49F5-A9A2-CB0B8DFB78B7" Scope="perMachine">
+    <SummaryInformation Description="SaelBrowser dla Windows 10/11" Manufacturer="SAEL" />
+    <MajorUpgrade DowngradeErrorMessage="Nowsza wersja SaelBrowser jest już zainstalowana." />
+    <MediaTemplate EmbedCab="yes" CompressionLevel="high" />
+
+    <StandardDirectory Id="ProgramFiles64Folder">
+      <Directory Id="INSTALLFOLDER" Name="SaelBrowser">
+        <Files Include="!(bindpath.publish)\**">
+          <Exclude Files="!(bindpath.publish)\SaelBrowser.exe" />
+          <Exclude Files="!(bindpath.publish)\*.pdb" />
+        </Files>
+        <Component Id="MainExecutable" Guid="*" Bitness="always64">
+          <File Id="SaelBrowserExe" Source="!(bindpath.publish)\SaelBrowser.exe" KeyPath="yes">
+            <Shortcut Id="StartMenuShortcut" Directory="ProgramMenuFolder" Name="SaelBrowser"
+                      WorkingDirectory="INSTALLFOLDER" Advertise="yes" />
+          </File>
+        </Component>
+      </Directory>
+    </StandardDirectory>
+  </Package>
+</Wix>

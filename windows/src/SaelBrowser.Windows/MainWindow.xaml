@@ -1,0 +1,43 @@
+<Window x:Class="SaelBrowser.Windows.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:wv2="clr-namespace:Microsoft.Web.WebView2.Wpf;assembly=Microsoft.Web.WebView2.Wpf"
+        Title="SaelBrowser" Width="1280" Height="820" MinWidth="850" MinHeight="560"
+        Background="{StaticResource BackgroundBrush}">
+  <Grid>
+    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+    <Grid Grid.Row="0" Margin="6">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+        <ColumnDefinition Width="Auto"/><ColumnDefinition Width="Auto"/>
+      </Grid.ColumnDefinitions>
+      <Button x:Name="BackButton" Grid.Column="0" Content="← WSTECZ" Click="Back_Click" ToolTip="Poprzednia strona" />
+      <Button x:Name="ForwardButton" Grid.Column="1" Content="DALEJ →" Click="Forward_Click" ToolTip="Następna strona" />
+      <Button x:Name="ReloadButton" Grid.Column="2" Content="↻" Click="Reload_Click" ToolTip="Odśwież stronę" />
+      <TextBox x:Name="AddressBar" Grid.Column="3" Margin="6,3" Padding="9,6" VerticalContentAlignment="Center"
+               KeyDown="AddressBar_KeyDown" AutomationProperties.Name="Adres strony" />
+      <Button Grid.Column="4" Content="PRZEJDŹ" Click="Go_Click" />
+      <Button x:Name="OriginalButton" Grid.Column="5" Content="ORYGINAŁ" Click="Original_Click" />
+      <Button x:Name="SaelButton" Grid.Column="6" Content="SAEL ✓" Click="Sael_Click" />
+      <Button Grid.Column="7" Content="PRYWATNOŚĆ" Click="Privacy_Click" />
+    </Grid>
+    <Grid Grid.Row="1" Margin="9,0,9,6">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+      <TextBlock x:Name="StatusText" Foreground="#E7C65F" VerticalAlignment="Center" Text="Uruchamianie WebView2…"/>
+      <Button x:Name="VerdictButton" Grid.Column="1" Content="NIE WIEM • oczekiwanie" IsEnabled="False" Click="Verdict_Click"/>
+    </Grid>
+    <Grid Grid.Row="2">
+      <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition x:Name="DetailsColumn" Width="0"/></Grid.ColumnDefinitions>
+      <Border Grid.Column="0" Margin="6,0,6,6" BorderBrush="#8E7838" BorderThickness="1">
+        <wv2:WebView2 x:Name="Browser" />
+      </Border>
+      <Border Grid.Column="1" Background="#102018" BorderBrush="#8E7838" BorderThickness="1,0,0,0" Padding="14">
+        <DockPanel>
+          <Button DockPanel.Dock="Top" HorizontalAlignment="Right" Content="ZAMKNIJ" Click="CloseDetails_Click" />
+          <ScrollViewer VerticalScrollBarVisibility="Auto"><TextBlock x:Name="DetailsText" Foreground="#F0E5BB" TextWrapping="Wrap"/></ScrollViewer>
+        </DockPanel>
+      </Border>
+    </Grid>
+  </Grid>
+</Window>

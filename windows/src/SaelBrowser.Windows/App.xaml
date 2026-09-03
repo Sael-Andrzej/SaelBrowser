@@ -1,0 +1,15 @@
+<Application x:Class="SaelBrowser.Windows.App"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             StartupUri="MainWindow.xaml">
+  <Application.Resources>
+    <SolidColorBrush x:Key="BackgroundBrush" Color="#07130C" />
+    <SolidColorBrush x:Key="PanelBrush" Color="#102018" />
+    <SolidColorBrush x:Key="GoldBrush" Color="#E7C65F" />
+    <Style TargetType="Button">
+      <Setter Property="Margin" Value="3"/><Setter Property="Padding" Value="10,6"/>
+      <Setter Property="Background" Value="#1B3024"/><Setter Property="Foreground" Value="#F0E5BB"/>
+      <Setter Property="BorderBrush" Value="#8E7838"/><Setter Property="Cursor" Value="Hand"/>
+    </Style>
+  </Application.Resources>
+</Application>

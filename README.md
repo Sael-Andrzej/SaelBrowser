@@ -1,7 +1,7 @@
 # SaelBrowser
 
-Natywna przeglądarka Android z trybem czytelnym SAEL i konserwatywną analizą
-dowodów dla twierdzeń zawartych w artykułach.
+Przeglądarka dla Androida i Windows z trybem czytelnym SAEL oraz konserwatywną
+analizą dowodów dla twierdzeń zawartych w artykułach.
 
 ## Już działa
 - WebView jako przeglądarka
@@ -29,3 +29,14 @@ Konfiguracja podpisanego release jest opisana w
 [`docs/RELEASE_SIGNING.md`](docs/RELEASE_SIGNING.md).
 
 Android może poprosić o zgodę na instalowanie aplikacji z przeglądarki/menedżera plików.
+
+## Windows 10/11
+
+Wersja Windows używa natywnego WPF oraz Microsoft Edge WebView2. Kod znajduje się
+w katalogu [`windows`](windows), razem z testami i projektem instalatora MSI.
+
+```powershell
+dotnet test windows/tests/SaelBrowser.Core.Tests/SaelBrowser.Core.Tests.csproj -c Release
+dotnet publish windows/src/SaelBrowser.Windows/SaelBrowser.Windows.csproj -c Release -r win-x64 --self-contained true -o windows/artifacts/publish/win-x64
+dotnet build windows/installer/SaelBrowser.Installer/SaelBrowser.Installer.wixproj -c Release
+```
