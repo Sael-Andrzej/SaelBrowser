@@ -42,7 +42,7 @@ public sealed partial class ClaimExtractor
         return new[] { (Text: title, IsTitle: true, Index: -1) }
             .Concat(SentenceBoundary().Split(article.Content).Select((text, index) => (Text: text, IsTitle: false, Index: index)))
             .Select(item => (Text: Normalize(item.Text), item.IsTitle, item.Index))
-            .Where(item => item.Text.Length is >= 8 and <= 500 && !IsQuestion(item.Text) && !CallToAction().IsMatch(item.Text))
+            .Where(item => item.Text.Length is >= 8 and <= 500 && !IsQuestion(item.Text) && !CallToAction().IsMatch(item.Text) && HasAssertivePredicate(item.Text))
             .DistinctBy(item => item.Text).Take(30)
             .Select(item => new Claim(Id(item.Text), item.Text, Factual().IsMatch(item.Text), Priority(item.Text, item.IsTitle, title, item.Index), article.PublishedAt))
             .Where(c => c.IsFactual).OrderByDescending(c => c.Priority).ToArray();
@@ -67,6 +67,7 @@ public sealed partial class ClaimExtractor
         return titleWords.Count == 0 ? 0 : titleWords.Intersect(textWords).Count() / (double)titleWords.Count;
     }
     private static bool IsQuestion(string text) => text.TrimEnd().EndsWith('?') || QuestionStart().IsMatch(text);
+    private static bool HasAssertivePredicate(string text) => AssertivePredicate().IsMatch(text) || QuantitativeAssertion().IsMatch(text);
     private static string Id(string text) => Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(text.ToLowerInvariant())))[..16].ToLowerInvariant();
     private static string Normalize(string value) => string.Join(' ', value.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     [GeneratedRegex(@"(?<=[.!?])\s+")]
@@ -77,6 +78,10 @@ public sealed partial class ClaimExtractor
     private static partial Regex Date();
     [GeneratedRegex(@"\b(wynosi|ogłosił|ogłosiła|opublikował|opublikowała|podpisał|zmarł|zmarła|żyje|urodził|jest|był|była|ma|posiada|stwierdził|reported|announced|is|was|has|died|dead|alive)\b|(?<!\w)\d+(?:[.,]\d+)?", RegexOptions.IgnoreCase)]
     private static partial Regex Factual();
+    [GeneratedRegex(@"\b(?:wynosi|ogłosił|ogłosiła|opublikował|opublikowała|podpisał|zmarł|zmarła|żyje|urodził|jest|są|był|była|ma|mają|posiada|stwierdził|powoduje|powodują|wywołuje|wywołują|zwiększa|zwiększają|reported|announced|is|are|was|has|causes?|increases?)\b", RegexOptions.IgnoreCase)]
+    private static partial Regex AssertivePredicate();
+    [GeneratedRegex(@"(?<!\w)\d+(?:[.,]\d+)?\s*(?:%|proc\.?|procent|mln|mld|lat|rok|roku|osób|osob|przypadk)", RegexOptions.IgnoreCase)]
+    private static partial Regex QuantitativeAssertion();
     [GeneratedRegex(@"^\s*(?:czy|co|kto|gdzie|kiedy|dlaczego|jak|which|what|who|where|when|why|how)\b", RegexOptions.IgnoreCase)]
     private static partial Regex QuestionStart();
     [GeneratedRegex(@"\b(?:twierdzenie|teoria|spekulacj|plotk|pogłosk|is claimed|allegedly)\b", RegexOptions.IgnoreCase)]

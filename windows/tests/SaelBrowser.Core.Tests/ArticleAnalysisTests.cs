@@ -25,6 +25,20 @@ public sealed class ArticleAnalysisTests
     }
 
     [Fact]
+    public void DemagogTopicHeadingDoesNotDisplaceLogicalClaims()
+    {
+        var article = new ArticleInput("Szczepionki i 5G powodują nowotwory? Fałszywe informacje", """
+            Nie ma dowodów na związek technologii 5G z nowotworami.
+            Nie ma wiarygodnych dowodów na wzrost liczby nowotworów po szczepieniu przeciw COVID-19.
+            Szczepienia przeciw COVID-19 a nowotwory.
+            """, "https://demagog.org.pl/test", "demagog.org.pl");
+        var claims = new ClaimDecomposer(new ClaimExtractor(), 4).Decompose(article);
+        Assert.DoesNotContain(claims, claim => claim.Text == "Szczepienia przeciw COVID-19 a nowotwory.");
+        Assert.Contains(claims, claim => claim.Text.StartsWith("Nie ma dowodów", StringComparison.Ordinal));
+        Assert.Contains(claims, claim => claim.Text.StartsWith("Nie ma wiarygodnych", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task EachClaimGetsIndependentVerdictAndResultsAreProgressive()
     {
         var provider = new DeterministicEvidenceProvider();

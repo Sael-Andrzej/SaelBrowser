@@ -50,19 +50,52 @@ public sealed class RemoteEvidenceProvider : IDiagnosticEvidenceProvider
         var diagnostics = new List<EvidenceDiagnostic>();
         var fetch = TimeSpan.Zero; var classification = TimeSpan.Zero;
         foreach (var query in EvidenceSemantics.QueryVariants(claim.Text))
-        foreach (var endpoint in _endpoints)
+        {
+            var primary = await RequestAsync(_endpoints[0], query);
+            if (primary.Items.Count > 0) return Result(primary.Items);
+            if (!primary.TransientFailure) continue;
+
+            await Task.Delay(TimeSpan.FromMilliseconds(200), cancellationToken);
+            var retry = await RequestAsync(_endpoints[0], query);
+            if (retry.Items.Count > 0) return Result(retry.Items);
+            if (!retry.TransientFailure || _endpoints.Length < 2) continue;
+
+            var fallback = await RequestAsync(_endpoints[1], query);
+            if (fallback.Items.Count > 0) return Result(fallback.Items);
+        }
+        return Result([]);
+
+        EvidenceProviderResult Result(IReadOnlyList<EvidenceItem> found) =>
+            new(found, diagnostics, new(TimeSpan.Zero, fetch, classification, TimeSpan.Zero, TimeSpan.Zero));
+
+        async Task<EndpointAttempt> RequestAsync(Uri endpoint, string query)
         {
             var requestClock = System.Diagnostics.Stopwatch.StartNew();
+            using var requestTimeout = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+            requestTimeout.CancelAfter(TimeSpan.FromMilliseconds(2500));
             try
             {
                 using var response = await _client.PostAsJsonAsync(endpoint, new EvidenceRequest(
-                    query[..Math.Min(500, query.Length)], query == claim.Text ? "pl" : "en", PublicOrigin(article.Url), DateOnlyValue(article.PublishedAt)), cancellationToken);
+                    query[..Math.Min(500, query.Length)], query == claim.Text ? "pl" : "en", PublicOrigin(article.Url), DateOnlyValue(article.PublishedAt)), requestTimeout.Token);
                 fetch += requestClock.Elapsed;
-                if ((int)response.StatusCode is 502 or 503 or 504) { diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, $"provider unavailable ({(int)response.StatusCode})", requestClock.Elapsed)); continue; }
-                if (!response.IsSuccessStatusCode) { diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, $"HTTP {(int)response.StatusCode}", requestClock.Elapsed)); continue; }
-                await using var stream = await response.Content.ReadAsStreamAsync(cancellationToken);
-                var body = await JsonSerializer.DeserializeAsync<EvidenceResponse>(stream, JsonOptions, cancellationToken);
-                if (body is null || Normalize(body.Query) != Normalize(query)) { diagnostics.Add(Diagnostic(query, endpoint, "classification", false, "invalid or mismatched provider response", requestClock.Elapsed)); continue; }
+                if ((int)response.StatusCode is 502 or 503 or 504)
+                {
+                    diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, $"provider unavailable ({(int)response.StatusCode})", requestClock.Elapsed));
+                    return new([], true);
+                }
+                if (!response.IsSuccessStatusCode)
+                {
+                    diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, $"HTTP {(int)response.StatusCode}", requestClock.Elapsed));
+                    return new([], false);
+                }
+                await using var stream = await response.Content.ReadAsStreamAsync(requestTimeout.Token);
+                var body = await JsonSerializer.DeserializeAsync<EvidenceResponse>(stream, JsonOptions, requestTimeout.Token);
+                if (body is null || Normalize(body.Query) != Normalize(query))
+                {
+                    diagnostics.Add(Diagnostic(query, endpoint, "classification", false, "invalid or mismatched provider response", requestClock.Elapsed));
+                    return new([], false);
+                }
+                diagnostics.AddRange(body.Warnings.Select(warning => Diagnostic(query, endpoint, "provider-warning", false, warning, requestClock.Elapsed)));
                 var mapped = new List<EvidenceItem>();
                 foreach (var item in body.Evidence.Take(10))
                 {
@@ -79,14 +112,27 @@ public sealed class RemoteEvidenceProvider : IDiagnosticEvidenceProvider
                     classification += classifyClock.Elapsed;
                 }
                 if (body.Evidence.Length == 0) diagnostics.Add(Diagnostic(query, endpoint, "discovery", false, "provider returned 0 candidates", requestClock.Elapsed));
-                if (mapped.Count > 0) return new(mapped, diagnostics, new(TimeSpan.Zero, fetch, classification, TimeSpan.Zero, TimeSpan.Zero));
+                return new(mapped, false);
             }
-            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested) { diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, "timeout", requestClock.Elapsed)); }
-            catch (HttpRequestException ex) { diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, "access failure: " + ex.Message, requestClock.Elapsed)); }
-            catch (JsonException) { diagnostics.Add(Diagnostic(query, endpoint, "classification", false, "invalid provider response", requestClock.Elapsed)); }
+            catch (OperationCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, "timeout", requestClock.Elapsed));
+                return new([], true);
+            }
+            catch (HttpRequestException ex)
+            {
+                diagnostics.Add(Diagnostic(query, endpoint, "fetch", false, "access failure: " + ex.Message, requestClock.Elapsed));
+                return new([], true);
+            }
+            catch (JsonException)
+            {
+                diagnostics.Add(Diagnostic(query, endpoint, "classification", false, "invalid provider response", requestClock.Elapsed));
+                return new([], false);
+            }
         }
-        return new([], diagnostics, new(TimeSpan.Zero, fetch, classification, TimeSpan.Zero, TimeSpan.Zero));
     }
+
+    private sealed record EndpointAttempt(IReadOnlyList<EvidenceItem> Items, bool TransientFailure);
 
     private EvidenceDiagnostic Diagnostic(string query, Uri endpoint, string stage, bool accepted, string reason, TimeSpan elapsed) =>
         new(Id, query, endpoint.AbsoluteUri, stage, accepted, reason, elapsed);

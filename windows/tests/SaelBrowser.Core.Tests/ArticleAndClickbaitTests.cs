@@ -87,6 +87,25 @@ public sealed class ArticleAndClickbaitTests
         Assert.Empty(extractor.Extract(new("Moim zdaniem piękny dzień", "Cudowny i spokojny opis.", "https://x.example", "x.example")));
     }
 
+    [Theory]
+    [InlineData("Szczepienia przeciw COVID-19 a nowotwory.")]
+    [InlineData("5G i zdrowie.")]
+    [InlineData("Szczepionki kontra rak.")]
+    public void ExtractorRejectsTopicHeadingsWithoutPredicate(string heading)
+    {
+        var claims = new ClaimExtractor().Extract(new(heading, heading, "https://x.example", "x.example"));
+        Assert.Empty(claims);
+    }
+
+    [Theory]
+    [InlineData("Szczepienia przeciw COVID-19 powodują nowotwory.")]
+    [InlineData("Nie ma dowodów na związek 5G z nowotworami.")]
+    public void ExtractorKeepsCompletePositiveAndNegativeClaims(string statement)
+    {
+        var claims = new ClaimExtractor().Extract(new(statement, statement, "https://x.example", "x.example"));
+        Assert.Contains(claims, claim => claim.Text == statement);
+    }
+
     [Fact]
     public void FactualArticleTitleHasPriorityOverNumericMetadata()
     {

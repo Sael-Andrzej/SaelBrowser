@@ -1,6 +1,8 @@
 using SaelBrowser.Core.Articles;
 using SaelBrowser.Core.Evidence;
 using SaelBrowser.Core.Facts;
+using System.Net;
+using System.Text;
 
 namespace SaelBrowser.Core.Tests;
 
@@ -118,6 +120,38 @@ public sealed class EvidenceAndFactTests
     public void StructuredRatingsSupportMultiplePredicateFamilies(string query, string reviewedClaim, string snippet, EvidenceStance expected) =>
         Assert.Equal(expected, EvidenceSemantics.FactCheckStance(query, reviewedClaim, snippet));
 
+    [Theory]
+    [InlineData("Nie ma wiarygodnych dowodów na wzrost liczby nowotworów po szczepieniu przeciw COVID-19.", "Szczepienia przeciw COVID-19 powodują nowotwory.", "Demagog — Fałsz", EvidenceStance.Supports)]
+    [InlineData("Brak dowodów na to, że szczepienia przeciw COVID-19 powodują nowotwory.", "Szczepienia przeciw COVID-19 powodują nowotwory.", "Ocena — Prawda", EvidenceStance.Refutes)]
+    [InlineData("Nie ma dowodów na to, że szczepienia powodują nowotwory.", "Szczepionki zawierają grafen.", "Ocena — Fałsz", EvidenceStance.Unknown)]
+    [InlineData("Nie ma dowodów na to, że 5G powoduje nowotwory.", "5G powoduje bóle głowy.", "Ocena — Fałsz", EvidenceStance.Unknown)]
+    [InlineData("Nie ma dowodów na to, że 5G powoduje nowotwory.", "5G powoduje nowotwory.", "Artykuł omawia temat", EvidenceStance.Unknown)]
+    public void PolishEvidenceNegationRequiresMatchingExplicitFactCheck(string query, string reviewedClaim, string snippet, EvidenceStance expected) =>
+        Assert.Equal(expected, EvidenceSemantics.FactCheckStance(query, reviewedClaim, snippet));
+
+    [Fact]
+    public void PolishEvidenceNegationProducesPositiveClaimCoreWithoutMalformedDeletion()
+    {
+        var variants = EvidenceSemantics.QueryVariants("Nie ma wiarygodnych dowodów na wzrost liczby nowotworów po szczepieniu przeciw COVID-19.");
+        Assert.Contains(variants, value => value.Contains("szczepienie przeciw COVID-19 powoduje wzrost liczby nowotwory", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains(variants, value => value.StartsWith("fact check szczepienie", StringComparison.OrdinalIgnoreCase));
+        Assert.DoesNotContain(variants, value => value.StartsWith("ma wiarygodnych dowodów", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
+    public void PolishNoEvidenceRelationProducesPositiveFiveGCore()
+    {
+        var variants = EvidenceSemantics.QueryVariants("Nie ma też dowodów naukowych, które potwierdzałyby związek między promieniowaniem elektromagnetycznym używanym w sieci 5G a występowaniem nowotworów.");
+        Assert.Contains(variants, value => value.Contains("promieniowanie elektromagnetyczne używane w sieci 5G powoduje nowotwory", StringComparison.OrdinalIgnoreCase));
+        Assert.Contains("5G powoduje nowotwory", variants);
+    }
+
+    [Theory]
+    [InlineData("Szczepionki i 5G powodują nowotwory", "Szczepienia przeciw COVID-19 powodują nowotwory.", "Demagog — Fałsz")]
+    [InlineData("Szczepionki i 5G powodują nowotwory", "Technologia 5G powoduje nowotwory.", "Demagog — Fałsz")]
+    public void CancerCausationFactChecksMatchExplicitCompoundTitle(string query, string reviewedClaim, string snippet) =>
+        Assert.Equal(EvidenceStance.Refutes, EvidenceSemantics.FactCheckStance(query, reviewedClaim, snippet));
+
     [Fact]
     public void PolishSearchClaimGetsCleanEnglishProviderVariant()
     {
@@ -208,6 +242,56 @@ public sealed class EvidenceAndFactTests
     }
 
     [Fact]
+    public async Task TransientPrimaryFailureRetriesOnceWithoutCallingFallbackAfterSuccess()
+    {
+        var handler = new RecordingHandler((request, call) => call == 1
+            ? new HttpResponseMessage(HttpStatusCode.ServiceUnavailable)
+            : EvidenceResponse(request, []));
+        var provider = new RemoteEvidenceProvider(new HttpClient(handler), "https://primary.example", "https://fallback.example");
+        await provider.FindDetailedAsync(Claim, Article, default);
+        Assert.Equal(EvidenceSemantics.QueryVariants(Claim.Text).Length + 1, handler.Requests.Count);
+        Assert.All(handler.Requests, uri => Assert.Equal("primary.example", uri.Host));
+    }
+
+    [Fact]
+    public async Task SuccessfulEmptyResponseDoesNotRetryOrCallFallback()
+    {
+        var handler = new RecordingHandler((request, _) => EvidenceResponse(request, []));
+        var provider = new RemoteEvidenceProvider(new HttpClient(handler), "https://primary.example", "https://fallback.example");
+        await provider.FindDetailedAsync(Claim, Article, default);
+        Assert.Equal(EvidenceSemantics.QueryVariants(Claim.Text).Length, handler.Requests.Count);
+        Assert.All(handler.Requests, uri => Assert.Equal("primary.example", uri.Host));
+    }
+
+    [Fact]
+    public async Task RateLimitDoesNotRetryOrCallFallback()
+    {
+        var handler = new RecordingHandler((_, _) => new HttpResponseMessage(HttpStatusCode.TooManyRequests));
+        var provider = new RemoteEvidenceProvider(new HttpClient(handler), "https://primary.example", "https://fallback.example");
+        await provider.FindDetailedAsync(Claim, Article, default);
+        Assert.Equal(EvidenceSemantics.QueryVariants(Claim.Text).Length, handler.Requests.Count);
+    }
+
+    [Fact]
+    public async Task BackendWarningsArePreservedAsDiagnostics()
+    {
+        var handler = new RecordingHandler((request, _) => EvidenceResponse(request, [], "brave-search: unavailable"));
+        var provider = new RemoteEvidenceProvider(new HttpClient(handler), "https://primary.example");
+        var result = await provider.FindDetailedAsync(Claim, Article, default);
+        Assert.Contains(result.Diagnostics, item => item.Stage == "provider-warning" && item.Reason == "brave-search: unavailable");
+    }
+
+    [Fact]
+    public async Task SamePublisherArticlesDoNotReplaceTwoIndependentClusters()
+    {
+        var first = Item("demagog.org.pl", EvidenceStance.Refutes, "article-one") with { PrimarySourceId = "publisher:demagog" };
+        var second = Item("demagog.org.pl", EvidenceStance.Refutes, "article-two") with { PrimarySourceId = "publisher:demagog" };
+        var set = await new EvidenceEngine([Provider(first, second)]).EvaluateAsync(Claim, Article, default);
+        Assert.Single(set.Clusters!);
+        Assert.False(set.Sufficient);
+    }
+
+    [Fact]
     public void HistoricalQueriesContainEnglishEntityDateCompactAndPolarizedVariants()
     {
         var variants = EvidenceSemantics.QueryVariants("W Roswell w 1947 roku rozbił się statek obcych");
@@ -283,5 +367,22 @@ public sealed class EvidenceAndFactTests
     {
         public Task<EvidenceItem?> VerifyAsync(string url, string publisher, Claim claim, CancellationToken cancellationToken) =>
             Task.FromResult<EvidenceItem?>(item with { ClaimId = claim.Id });
+    }
+
+    private static HttpResponseMessage EvidenceResponse(HttpRequestMessage request, string[] evidence, params string[] warnings)
+    {
+        var query = System.Text.Json.JsonDocument.Parse(request.Content!.ReadAsStringAsync().GetAwaiter().GetResult()).RootElement.GetProperty("claim").GetString();
+        var json = System.Text.Json.JsonSerializer.Serialize(new { query, evidence, warnings, cacheHit = false });
+        return new HttpResponseMessage(HttpStatusCode.OK) { Content = new StringContent(json, Encoding.UTF8, "application/json") };
+    }
+
+    private sealed class RecordingHandler(Func<HttpRequestMessage, int, HttpResponseMessage> respond) : HttpMessageHandler
+    {
+        public List<Uri> Requests { get; } = [];
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            Requests.Add(request.RequestUri!);
+            return Task.FromResult(respond(request, Requests.Count));
+        }
     }
 }

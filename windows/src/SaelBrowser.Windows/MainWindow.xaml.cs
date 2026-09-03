@@ -58,7 +58,7 @@ public partial class MainWindow : Window
         discoveryHttp.DefaultRequestHeaders.UserAgent.ParseAdd("SaelBrowser-Windows/0.1 evidence-discovery");
         var institutional = new DiscoveryEvidenceProvider([new InstitutionalHistoryDiscovery()], verifier);
         var publicDiscovery = new DiscoveryEvidenceProvider([new GdeltSourceDiscovery(discoveryHttp), new WikimediaSourceDiscovery(discoveryHttp)], verifier);
-        var factEngine = new FactEngine(new ClaimExtractor(), new ClickbaitAnalyzer(), new EvidenceEngine([remote, institutional, publicDiscovery, linked]));
+        var factEngine = new FactEngine(new ClaimExtractor(), new ClickbaitAnalyzer(), new EvidenceEngine([remote, institutional, publicDiscovery, linked], TimeSpan.FromSeconds(8)));
         _analysis = new AnalysisCoordinator(extractor, factEngine);
         _articleAnalysis = new ArticleAnalysisCoordinator(extractor, new ClaimDecomposer(new ClaimExtractor()), factEngine, new AnalysisResultCache());
         Loaded += InitializeAsync;

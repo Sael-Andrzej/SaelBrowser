@@ -26,8 +26,18 @@ public static partial class EvidenceSemantics
         if (entities.Length >= 8) variants.Add(entities);
         var compact = Compact(normalized);
         if (compact.Length >= 8) variants.Add(compact);
-        variants.Add("fact check " + english);
-        variants.Add(PolarizedAlternative(english));
+        if (TryExtractEvidenceNegationCore(english, out var positiveCore))
+        {
+            variants.Add(positiveCore);
+            var focusedCore = FocusedCausalCore(positiveCore);
+            if (focusedCore is not null) variants.Add(focusedCore);
+            variants.Add("fact check " + positiveCore);
+        }
+        else
+        {
+            variants.Add("fact check " + english);
+            variants.Add(english + " no evidence");
+        }
         return variants.Select(Normalize).Where(value => value.Length >= 8)
             .Distinct(StringComparer.OrdinalIgnoreCase).Take(7).ToArray();
     }
@@ -51,16 +61,46 @@ public static partial class EvidenceSemantics
     private static string Compact(string value) => string.Join(' ', Tokens(value)
         .Where(token => !QueryStopWords.Contains(token)).Take(12));
 
-    private static string PolarizedAlternative(string value)
+    private static bool TryExtractEvidenceNegationCore(string value, out string core)
     {
-        if (Regex.IsMatch(value, @"\b(?:no|not|without|brak|nie)\b", RegexOptions.IgnoreCase))
-            return Regex.Replace(value, @"\b(?:no|not|without|brak|nie)\b", "", RegexOptions.IgnoreCase);
-        return value + " no evidence";
+        core = "";
+        var match = EvidenceNegation().Match(Normalize(value));
+        if (!match.Success) return false;
+        core = Normalize(match.Groups["core"].Value.Trim(' ', ',', '.', ':', ';'));
+        core = Regex.Replace(core, @"^to\s*,?\s*(?:że|ze|iż|iz)\s+", "", RegexOptions.IgnoreCase);
+        var relation = RelationBetween().Match(core);
+        if (relation.Success)
+            core = Normalize($"{NormalizePositiveCause(relation.Groups["cause"].Value)} powoduje {NormalizePositiveEffect(relation.Groups["effect"].Value)}");
+        else
+        {
+            var after = EffectAfterCause().Match(core);
+            if (after.Success)
+                core = Normalize($"{NormalizePositiveCause(after.Groups["cause"].Value)} powoduje {NormalizePositiveEffect(after.Groups["effect"].Value)}");
+        }
+        return core.Length >= 8;
+    }
+
+    private static string NormalizePositiveCause(string value) => Regex.Replace(
+        Regex.Replace(value, @"\bszczepieniu\b", "szczepienie", RegexOptions.IgnoreCase),
+        @"\bpromieniowaniem elektromagnetycznym używanym\b", "promieniowanie elektromagnetyczne używane", RegexOptions.IgnoreCase);
+    private static string NormalizePositiveEffect(string value) => Regex.Replace(value, @"\bnowotworów\b", "nowotwory", RegexOptions.IgnoreCase);
+    private static string? FocusedCausalCore(string value)
+    {
+        if (!CancerOutcome().IsMatch(value)) return null;
+        if (Regex.IsMatch(value, @"\b5G\b", RegexOptions.IgnoreCase)) return "5G powoduje nowotwory";
+        if (Regex.IsMatch(value, @"\bszczepieni\w*(?:\s+przeciw\s+COVID-?19)?\b", RegexOptions.IgnoreCase))
+            return "Szczepienia przeciw COVID-19 powodują nowotwory";
+        return null;
     }
 
     public static EvidenceStance FactCheckStance(string query, string reviewedClaim, string snippet)
     {
         var rating = Rating(snippet);
+        if (TryExtractEvidenceNegationCore(query, out var positiveCore))
+        {
+            if (rating == 0 || !SameProposition(positiveCore, reviewedClaim)) return EvidenceStance.Unknown;
+            return rating < 0 ? EvidenceStance.Supports : EvidenceStance.Refutes;
+        }
         if (!SameSubject(query, reviewedClaim)) return EvidenceStance.Unknown;
         if (rating == 0)
         {
@@ -157,6 +197,8 @@ public static partial class EvidenceSemantics
         if (flat != round) return flat ? 2 : -2;
         if (NoMicrochips().IsMatch(value)) return -3;
         if (Microchips().IsMatch(value)) return 3;
+        if (NegatedCancerCause().IsMatch(value)) return -4;
+        if (CancerCause().IsMatch(value)) return 4;
         return 0;
     }
     private static bool SameSubject(string first, string second)
@@ -165,6 +207,18 @@ public static partial class EvidenceSemantics
         var right = Tokens(second).ToHashSet();
         return left.Any(token => token.Length >= 5 && right.Contains(token));
     }
+    private static bool SameProposition(string first, string second)
+    {
+        var left = Tokens(first).Where(token => !PropositionStopWords.Contains(token)).ToHashSet();
+        var right = Tokens(second).Where(token => !PropositionStopWords.Contains(token)).ToHashSet();
+        var common = left.Intersect(right).ToArray();
+        if (common.Length < 2) return false;
+        var explicitFiveG = Regex.IsMatch(first, @"\b5G\b", RegexOptions.IgnoreCase) && Regex.IsMatch(second, @"\b5G\b", RegexOptions.IgnoreCase);
+        var topicMatch = (explicitFiveG || common.Any(IsHealthSubject)) && common.Any(IsHealthOutcome);
+        return topicMatch || common.Length >= 3 && common.Length / (double)Math.Min(left.Count, right.Count) >= .5;
+    }
+    private static bool IsHealthSubject(string value) => value.StartsWith("szczep", StringComparison.Ordinal) || value is "covid" or "promieniowaniem" or "elektromagnetycznym" or "sieci";
+    private static bool IsHealthOutcome(string value) => value.StartsWith("nowotwor", StringComparison.Ordinal) || value.StartsWith("rak", StringComparison.Ordinal);
     private static double Similarity(string first, string second)
     {
         var left = Tokens(first).ToHashSet(); var right = Tokens(second).ToHashSet();
@@ -173,6 +227,7 @@ public static partial class EvidenceSemantics
     private static IEnumerable<string> Tokens(string value) => Word().Matches(Normalize(value).ToLowerInvariant()).Select(match => match.Value).Where(value => value.Length >= 3);
     private static string Normalize(string value) => string.Join(' ', (value ?? "").Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries));
     private static readonly HashSet<string> PredicateWords = ["zmarł", "zmarła", "żyje", "dead", "died", "alive", "passed", "away", "nie", "flat", "round", "spherical", "microchips", "contains", "contain"];
+    private static readonly HashSet<string> PropositionStopWords = ["brak", "dowodów", "dowodow", "dowodu", "wiarygodnych", "naukowych", "potwierdzałyby", "potwierdzalyby", "związek", "zwiazek", "między", "miedzy", "występowaniem", "wystepowaniem", "wzrost", "liczby", "przeciw", "powoduje", "powodują", "powoduja", "wywołuje", "wywoluja"];
     private static readonly Dictionary<string, string> HistoricalTranslations = new(StringComparer.OrdinalIgnoreCase)
     {
         ["statek obcych"] = "alien spacecraft", ["statku obcych"] = "alien spacecraft",
@@ -200,6 +255,9 @@ public static partial class EvidenceSemantics
     [GeneratedRegex(@"\b(?:flat|płaska|plaska)\b", RegexOptions.IgnoreCase)] private static partial Regex FlatWords();
     [GeneratedRegex(@"\b(?:do not contain microchips|does not contain microchips|don't contain microchips|without microchips|nie zawierają mikrochipów|nie zawieraja mikrochipow)\b", RegexOptions.IgnoreCase)] private static partial Regex NoMicrochips();
     [GeneratedRegex(@"\b(?:contain microchips|contains microchips|microchip implants|zawierają mikrochipy|zawieraja mikrochipy)\b", RegexOptions.IgnoreCase)] private static partial Regex Microchips();
+    [GeneratedRegex(@"\b(?:nie\s+powod\w*|nie\s+wywoł\w*|does\s+not\s+cause)\b.{0,80}\b(?:nowotwor\w*|rak\w*|cancer\w*)\b", RegexOptions.IgnoreCase)] private static partial Regex NegatedCancerCause();
+    [GeneratedRegex(@"\b(?:szczep\w*|5G|promieniowani\w*).{0,100}\b(?:powod\w*|wywoł\w*|zwiększ\w*|causes?|increases?)\b.{0,80}\b(?:nowotwor\w*|rak\w*|cancer\w*)\b", RegexOptions.IgnoreCase)] private static partial Regex CancerCause();
+    [GeneratedRegex(@"\b(?:nowotwor\w*|rak\w*|cancer\w*)\b", RegexOptions.IgnoreCase)] private static partial Regex CancerOutcome();
     [GeneratedRegex(@"\b(?:is alive|is dead|has died|passed away|żyje|nie żyje|zmarł|zmarła|is flat|is not flat|is round|is spherical|contains? microchips?|nie zawiera(?:ją)? mikrochipów|jest płaska|jest kulista)\b", RegexOptions.IgnoreCase)] private static partial Regex CopularPredicate();
     [GeneratedRegex(@"\b(?:claim|claims|claimed|belief|believes|believed|theory|myth|misconception|rumou?r|hoax|alleged|proponents?|idea|disproven|twierdzi|twierdzenie|pogląd|teoria|mit|plotka|rzekomo)\b", RegexOptions.IgnoreCase)] private static partial Regex ReportedClaim();
     [GeneratedRegex(@"(?<=[.!?])\s+")] private static partial Regex Sentence();
@@ -207,4 +265,10 @@ public static partial class EvidenceSemantics
     private static partial Regex Word();
     [GeneratedRegex(@"^(?:18|19|20)\d{2}$")]
     private static partial Regex Year();
+    [GeneratedRegex(@"^\s*(?:(?:nie\s+(?:ma|istnieją|istnieja|istnieje))|brak)\s+(?:(?:też|tez|żadnych|zadnych|wiarygodnych|naukowych)\s+)*dowod(?:u|ów|ow)\s*(?:naukowych\s*)?\s*,?\s*(?:na|że|ze|iż|iz|które\s+potwierdzałyby|ktore\s+potwierdzalyby)?\s*(?<core>.+)$", RegexOptions.IgnoreCase)]
+    private static partial Regex EvidenceNegation();
+    [GeneratedRegex(@"^związek\s+między\s+(?<cause>.+?)\s+a\s+(?:występowaniem|wystepowaniem|wzrostem|ryzykiem)\s+(?<effect>.+)$", RegexOptions.IgnoreCase)]
+    private static partial Regex RelationBetween();
+    [GeneratedRegex(@"^(?<effect>wzrost.+?)\s+po\s+(?<cause>szczepieni\w*(?:\s+przeciw\s+COVID-?19)?)$", RegexOptions.IgnoreCase)]
+    private static partial Regex EffectAfterCause();
 }

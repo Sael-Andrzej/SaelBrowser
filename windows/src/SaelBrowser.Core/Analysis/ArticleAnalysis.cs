@@ -32,7 +32,7 @@ public sealed partial class ClaimDecomposer(ClaimExtractor extractor, int maximu
     {
         var titleTokens = Tokens(article.Title);
         var ranked = extractor.Extract(article)
-            .Where(claim => claim.Text.Length is >= 20 and <= 320 && !OpinionOrAttributionOnly().IsMatch(claim.Text))
+            .Where(claim => claim.Text.Length is >= 20 and <= 320 && !OpinionOrAttributionOnly().IsMatch(claim.Text) && !TopicHeading().IsMatch(claim.Text))
             .Select(claim => (Claim: claim, Score: Score(claim, titleTokens)))
             .OrderByDescending(item => item.Score)
             .ToArray();
@@ -88,6 +88,8 @@ public sealed partial class ClaimDecomposer(ClaimExtractor extractor, int maximu
     private static partial Regex Anecdote();
     [GeneratedRegex(@"\brozbi\w*", RegexOptions.IgnoreCase)]
     private static partial Regex CrashClaim();
+    [GeneratedRegex(@"^\s*[\p{L}\p{N} -]+\s+(?:a|i|kontra|wobec)\s+[\p{L}\p{N} -]+[.!:]?\s*$", RegexOptions.IgnoreCase)]
+    private static partial Regex TopicHeading();
     private static readonly HashSet<string> StopWords = new(StringComparer.OrdinalIgnoreCase)
         { "jest", "był", "była", "który", "która", "które", "oraz", "tego", "this", "that", "with", "from", "have", "were" };
 }
